@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rstdm/glados/internal/api"
+	"github.com/rstdm/glados/internal/server/middleware"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -55,7 +56,7 @@ func (s *Server) StopGraceful() {
 	}
 }
 
-func New(port int, sugar *zap.SugaredLogger) (*Server, error) {
+func New(port int, bearerToken string, sugar *zap.SugaredLogger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -63,7 +64,13 @@ func New(port int, sugar *zap.SugaredLogger) (*Server, error) {
 		return nil, fmt.Errorf("set trusted proxies to nil: %w", err)
 	}
 
-	router.Use(gin.Logger(), gin.Recovery())
+	middlewares := []gin.HandlerFunc{gin.Logger(), gin.Recovery()}
+	if bearerToken == "" {
+		sugar.Warn("No bearer token has been set and therefore all endpoints can be accessed without validation.")
+	} else {
+		middlewares = append(middlewares, middleware.BearerAuthentication(bearerToken))
+	}
+	router.Use(middlewares...)
 
 	api.RegisterHandler(router)
 
