@@ -28,7 +28,7 @@ func main() {
 	}
 	defer loggerCleanup()
 
-	serv, err := server.New(port, bearerToken, log)
+	serv, err := server.New(port, bearerToken, useProductionLogger, log)
 	if err != nil {
 		log.Fatalw("Failed to start server", "err", err, "port", port)
 		return

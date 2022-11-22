@@ -56,7 +56,7 @@ func (s *Server) StopGraceful() {
 	}
 }
 
-func New(port int, bearerToken string, sugar *zap.SugaredLogger) (*Server, error) {
+func New(port int, bearerToken string, useProductionLogger bool, sugar *zap.SugaredLogger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -64,12 +64,7 @@ func New(port int, bearerToken string, sugar *zap.SugaredLogger) (*Server, error
 		return nil, fmt.Errorf("set trusted proxies to nil: %w", err)
 	}
 
-	middlewares := []gin.HandlerFunc{gin.Logger(), gin.Recovery()}
-	if bearerToken == "" {
-		sugar.Warn("No bearer token has been set and therefore all endpoints can be accessed without validation.")
-	} else {
-		middlewares = append(middlewares, middleware.BearerAuthentication(bearerToken))
-	}
+	middlewares := buildMiddlewares(bearerToken, useProductionLogger, sugar)
 	router.Use(middlewares...)
 
 	api.RegisterHandler(router)
@@ -85,4 +80,22 @@ func New(port int, bearerToken string, sugar *zap.SugaredLogger) (*Server, error
 	}
 
 	return server, nil
+}
+
+func buildMiddlewares(bearerToken string, useProductionLogger bool, sugar *zap.SugaredLogger) []gin.HandlerFunc {
+	var middlewares []gin.HandlerFunc
+
+	if useProductionLogger {
+		middlewares = append(middlewares, middleware.ProductionLogger(sugar), middleware.ProductionRecovery(sugar))
+	} else {
+		middlewares = append(middlewares, gin.Logger(), gin.Recovery())
+	}
+
+	if bearerToken == "" {
+		sugar.Warn("No bearer token has been set and therefore all endpoints can be accessed without validation.")
+	} else {
+		middlewares = append(middlewares, middleware.BearerAuthentication(bearerToken))
+	}
+
+	return middlewares
 }
