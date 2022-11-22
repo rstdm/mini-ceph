@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rstdm/glados/internal/api"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -63,6 +64,8 @@ func New(port int, sugar *zap.SugaredLogger) (*Server, error) {
 	}
 
 	router.Use(gin.Logger(), gin.Recovery())
+
+	api.RegisterHandler(router)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", port),
