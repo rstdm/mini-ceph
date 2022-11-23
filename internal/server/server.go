@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/rstdm/glados/internal/api"
 	"github.com/rstdm/glados/internal/server/middleware"
 	"go.uber.org/zap"
@@ -56,7 +57,7 @@ func (s *Server) StopGraceful() {
 	}
 }
 
-func New(port int, bearerToken string, useProductionLogger bool, sugar *zap.SugaredLogger) (*Server, error) {
+func New(port int, bearerToken string, objectFolder string, useProductionLogger bool, sugar *zap.SugaredLogger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -67,7 +68,12 @@ func New(port int, bearerToken string, useProductionLogger bool, sugar *zap.Suga
 	middlewares := buildMiddlewares(bearerToken, useProductionLogger, sugar)
 	router.Use(middlewares...)
 
-	api.NewAPI().RegisterHandler(router)
+	a, err := api.NewAPI(objectFolder, sugar)
+	if err != nil {
+		err = errors.Wrap(err, "create api")
+		return nil, err
+	}
+	a.RegisterHandler(router)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", port),
