@@ -11,10 +11,11 @@ const objectParam = "objectHash"
 const objectRoute = ":" + objectParam
 
 type API struct {
-	fileHandler *file.Handler
+	fileHandler        *file.Handler
+	maxObjectSizeBytes int64
 }
 
-func NewAPI(objectFolder string, sugar *zap.SugaredLogger) (*API, error) {
+func NewAPI(objectFolder string, maxObjectSizeBytes int64, sugar *zap.SugaredLogger) (*API, error) {
 	fileHandler, err := file.NewHandler(objectFolder, sugar)
 	if err != nil {
 		err = errors.Wrap(err, "create file handler")
@@ -22,7 +23,8 @@ func NewAPI(objectFolder string, sugar *zap.SugaredLogger) (*API, error) {
 	}
 
 	api := &API{
-		fileHandler: fileHandler,
+		fileHandler:        fileHandler,
+		maxObjectSizeBytes: maxObjectSizeBytes,
 	}
 
 	return api, err

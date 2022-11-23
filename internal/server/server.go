@@ -57,7 +57,7 @@ func (s *Server) StopGraceful() {
 	}
 }
 
-func New(port int, bearerToken string, objectFolder string, useProductionLogger bool, sugar *zap.SugaredLogger) (*Server, error) {
+func New(port int, bearerToken string, objectFolder string, maxObjectSizeBytes int64, useProductionLogger bool, sugar *zap.SugaredLogger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -68,7 +68,7 @@ func New(port int, bearerToken string, objectFolder string, useProductionLogger 
 	middlewares := buildMiddlewares(bearerToken, useProductionLogger, sugar)
 	router.Use(middlewares...)
 
-	a, err := api.NewAPI(objectFolder, sugar)
+	a, err := api.NewAPI(objectFolder, maxObjectSizeBytes, sugar)
 	if err != nil {
 		err = errors.Wrap(err, "create api")
 		return nil, err
