@@ -7,6 +7,9 @@ import (
 	"go.uber.org/zap"
 )
 
+const objectParam = "objectHash"
+const objectRoute = ":" + objectParam
+
 type API struct {
 	fileHandler *file.Handler
 }
@@ -26,5 +29,7 @@ func NewAPI(objectFolder string, sugar *zap.SugaredLogger) (*API, error) {
 }
 
 func (a *API) RegisterHandler(engine *gin.Engine) {
-	engine.GET("/", a.helloWorldHandler)
+	objectGroup := engine.Group(objectRoute, objectMiddleware)
+
+	objectGroup.PUT("", a.putObject)
 }
