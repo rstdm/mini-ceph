@@ -67,7 +67,7 @@ func New(port int, bearerToken string, useProductionLogger bool, sugar *zap.Suga
 	middlewares := buildMiddlewares(bearerToken, useProductionLogger, sugar)
 	router.Use(middlewares...)
 
-	api.RegisterHandler(router)
+	api.NewAPI().RegisterHandler(router)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", port),

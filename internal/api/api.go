@@ -4,6 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterHandler(engine *gin.Engine) {
-	engine.GET("/", helloWorldHandler)
+type API struct{}
+
+func NewAPI() *API {
+	return &API{}
+}
+
+func (a *API) RegisterHandler(engine *gin.Engine) {
+	engine.GET("/", a.helloWorldHandler)
 }

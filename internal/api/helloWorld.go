@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func helloWorldHandler(context *gin.Context) {
+func (a *API) helloWorldHandler(context *gin.Context) {
 	context.String(http.StatusOK, "Hello World")
 }
