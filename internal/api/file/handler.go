@@ -1,7 +1,7 @@
 package file
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
@@ -15,12 +15,12 @@ type Handler struct {
 func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error) {
 	absFolder, err := filepath.Abs(objectFolder)
 	if err != nil {
-		err = errors.Wrapf(err, "convert [objectFolder=%v] to abs path", objectFolder)
+		err = fmt.Errorf("convert [objectFolder=%v] to abs path: %w", objectFolder, err)
 		return nil, err
 	}
 
 	if err := os.MkdirAll(absFolder, 0600); err != nil {
-		err = errors.Wrapf(err, "create [absFolder=%v]", absFolder)
+		err = fmt.Errorf("create [absFolder=%v]: %w", absFolder, err)
 		return nil, err
 	}
 

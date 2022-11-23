@@ -1,8 +1,8 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/rstdm/glados/internal/api/file"
 	"go.uber.org/zap"
 )
@@ -18,7 +18,7 @@ type API struct {
 func NewAPI(objectFolder string, maxObjectSizeBytes int64, sugar *zap.SugaredLogger) (*API, error) {
 	fileHandler, err := file.NewHandler(objectFolder, sugar)
 	if err != nil {
-		err = errors.Wrap(err, "create file handler")
+		err = fmt.Errorf("create file handler: %w", err)
 		return nil, err
 	}
 

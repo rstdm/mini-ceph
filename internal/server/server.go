@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/rstdm/glados/internal/api"
 	"github.com/rstdm/glados/internal/server/middleware"
 	"go.uber.org/zap"
@@ -70,7 +69,7 @@ func New(port int, bearerToken string, objectFolder string, maxObjectSizeBytes i
 
 	a, err := api.NewAPI(objectFolder, maxObjectSizeBytes, sugar)
 	if err != nil {
-		err = errors.Wrap(err, "create api")
+		err = fmt.Errorf("create api: %w", err)
 		return nil, err
 	}
 	a.RegisterHandler(router)
