@@ -3,10 +3,8 @@ package file
 import (
 	"errors"
 	"fmt"
-	"github.com/rstdm/glados/internal/api/object"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -45,12 +43,12 @@ func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error)
 }
 
 func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) error {
-	objectPath, err := h.getObjectPath(objectHash)
+	objectPath, err := getObjectPath(objectHash, h.objectFolder)
 	if err != nil {
 		return fmt.Errorf("get object path: %w", err)
 	}
 
-	fileExists, err := h.fileExists(objectPath)
+	fileExists, err := fileExists(objectPath)
 	if err != nil {
 		return fmt.Errorf("check file existence: %w", err)
 	}
@@ -64,9 +62,9 @@ func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) e
 	if err != nil {
 		return fmt.Errorf("open multipart file header: %w", err)
 	}
-	defer h.closeAndLogError(openedFile, objectHash)
+	defer closeAndLogError(openedFile, objectHash, h.sugar)
 
-	if err := h.createObject(objectPath, openedFile); err == nil {
+	if err := createObject(objectPath, openedFile, h.sugar); err == nil {
 		return nil
 	}
 
@@ -84,12 +82,12 @@ func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) e
 }
 
 func (h *Handler) GetObjectPath(objectHash string) (string, error) {
-	objectPath, err := h.getObjectPath(objectHash)
+	objectPath, err := getObjectPath(objectHash, h.objectFolder)
 	if err != nil {
 		return "", fmt.Errorf("get object path: %w", err)
 	}
 
-	objectExists, err := h.fileExists(objectPath)
+	objectExists, err := fileExists(objectPath)
 	if err != nil {
 		return "", fmt.Errorf("file exists: %w", err)
 	}
@@ -98,57 +96,5 @@ func (h *Handler) GetObjectPath(objectHash string) (string, error) {
 		return objectPath, nil
 	} else {
 		return "", nil
-	}
-}
-
-func (h *Handler) fileExists(path string) (exists bool, err error) {
-	// https://stackoverflow.com/questions/12518876/how-to-check-if-a-file-exists-in-go
-	_, err = os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-
-	err = fmt.Errorf("stat %v: %w", path, err)
-	return false, err
-}
-
-func (h *Handler) getObjectPath(objectHash string) (string, error) {
-	// ensure that we're really dealing with an object hash before we're using it to create a path
-	if !object.IsObjectHash(objectHash) {
-		return "", errNoObjectHash
-	}
-
-	// this operation would be insecure if we hadn't validated the object hash before
-	// For example an object hash like "../../someSystemConfigFile.xml" would be dangerous!
-	objectPath := filepath.Join(h.objectFolder, objectHash)
-
-	return objectPath, nil
-}
-
-func (h *Handler) createObject(objectPath string, file multipart.File) error {
-	createdFile, err := os.Create(objectPath)
-	if err != nil {
-		return fmt.Errorf("create file: %w", err)
-	}
-	defer h.closeAndLogError(createdFile, objectPath)
-
-	if _, err := io.Copy(createdFile, file); err != nil {
-		return fmt.Errorf("write content to file: %w", err)
-	}
-
-	return nil
-}
-
-func (h *Handler) closeAndLogError(c io.Closer, resourceName string) {
-	if err := c.Close(); err != nil {
-		h.sugar.Warnw("Failed to close resource",
-			"err", err,
-			"resourceType", fmt.Sprintf("%T", c),
-			"resourceName", resourceName,
-		)
 	}
 }
