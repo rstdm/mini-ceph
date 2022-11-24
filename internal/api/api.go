@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rstdm/glados/internal/api/file"
+	"github.com/rstdm/glados/internal/api/object"
 	"go.uber.org/zap"
 )
 
@@ -11,19 +11,19 @@ const objectParam = "objectHash"
 const objectRoute = ":" + objectParam
 
 type API struct {
-	fileHandler        *file.Handler
+	objectHandler      *object.Handler
 	maxObjectSizeBytes int64
 }
 
 func NewAPI(objectFolder string, maxObjectSizeBytes int64, sugar *zap.SugaredLogger) (*API, error) {
-	fileHandler, err := file.NewHandler(objectFolder, sugar)
+	objectHandler, err := object.NewHandler(objectFolder, sugar)
 	if err != nil {
-		err = fmt.Errorf("create file handler: %w", err)
+		err = fmt.Errorf("create object handler: %w", err)
 		return nil, err
 	}
 
 	api := &API{
-		fileHandler:        fileHandler,
+		objectHandler:      objectHandler,
 		maxObjectSizeBytes: maxObjectSizeBytes,
 	}
 
