@@ -2,7 +2,7 @@ package file
 
 import (
 	"fmt"
-	"github.com/rstdm/glados/internal/api/object"
+	"github.com/rstdm/glados/internal/api/object/hash"
 	"go.uber.org/zap"
 	"io"
 	"mime/multipart"
@@ -12,7 +12,7 @@ import (
 
 func getObjectPath(objectHash string, objectFolder string) (string, error) {
 	// ensure that we're really dealing with an object hash before we're using it to create a path
-	if !object.IsObjectHash(objectHash) {
+	if !hash.IsObjectHash(objectHash) {
 		return "", errNoObjectHash
 	}
 
