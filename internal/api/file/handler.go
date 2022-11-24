@@ -98,3 +98,24 @@ func (h *Handler) GetObjectPath(objectHash string) (string, error) {
 		return "", nil
 	}
 }
+
+func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
+	objectPath, err := getObjectPath(objectHash, h.objectFolder)
+	if err != nil {
+		return false, fmt.Errorf("get object path: %w", err)
+	}
+
+	err = os.Remove(objectPath)
+	if err == nil {
+		return true, nil
+	}
+
+	// there was an error
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+
+	// err is an unexpected error
+	err = fmt.Errorf("remove object: %w", err)
+	return false, err
+}

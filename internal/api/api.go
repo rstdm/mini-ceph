@@ -35,4 +35,5 @@ func (a *API) RegisterHandler(engine *gin.Engine) {
 
 	objectGroup.PUT("", a.putObject)
 	objectGroup.GET("", a.getObject)
+	objectGroup.DELETE("", a.deleteObject)
 }
