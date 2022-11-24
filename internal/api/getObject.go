@@ -9,7 +9,7 @@ import (
 func (a *API) getObject(c *gin.Context) {
 	objectHash := getObjectHash(c)
 
-	objectPath, err := a.fileHandler.GetObjectPath(objectHash)
+	objectPath, err := a.objectHandler.GetObjectPath(objectHash)
 	if err != nil {
 		err = fmt.Errorf("get object path: %w", err)
 		_ = c.AbortWithError(http.StatusInternalServerError, err)

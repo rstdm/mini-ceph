@@ -9,7 +9,7 @@ import (
 func (a *API) deleteObject(c *gin.Context) {
 	objectHash := getObjectHash(c)
 
-	didExist, err := a.fileHandler.DeleteObject(objectHash)
+	didExist, err := a.objectHandler.DeleteObject(objectHash)
 	if err != nil {
 		err = fmt.Errorf("delete object: %w", err)
 		_ = c.AbortWithError(http.StatusInternalServerError, err)

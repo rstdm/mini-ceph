@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rstdm/glados/internal/api/file"
+	"github.com/rstdm/glados/internal/api/object"
 	"net/http"
 )
 
@@ -26,14 +26,14 @@ func (a *API) putObject(c *gin.Context) {
 
 	objectHash := getObjectHash(c)
 
-	err = a.fileHandler.PersistObject(objectHash, formFile)
+	err = a.objectHandler.PersistObject(objectHash, formFile)
 	if err == nil {
 		c.String(http.StatusOK, "object persisted")
 		return
 	}
 
 	// there was an error
-	if errors.Is(err, file.ErrObjectAlreadyExists) {
+	if errors.Is(err, object.ErrObjectAlreadyExists) {
 		c.String(http.StatusConflict, "The requested object already exists.")
 	} else {
 		err = fmt.Errorf("persist object: %w", err)
