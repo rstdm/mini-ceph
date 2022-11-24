@@ -9,6 +9,9 @@ import (
 )
 
 func (a *API) putObject(c *gin.Context) {
+	// TODO this function (putObject) is called before the request body (the file) has completely been transmitted.
+	// TODO c.FormFile blocks until the file has completely been transmitted. -> Check weather the object already
+	// TODO exists before calling c.FormFile. This way the request can be aborted without transmitting the file.
 	formFile, err := c.FormFile("file")
 	if err != nil {
 		c.String(http.StatusBadRequest, "Missing form-file 'file'")
