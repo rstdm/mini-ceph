@@ -50,12 +50,12 @@ func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) e
 		return fmt.Errorf("get object path: %w", err)
 	}
 
-	// https://stackoverflow.com/questions/12518876/how-to-check-if-a-file-exists-in-go
-	_, err = os.Stat(objectPath)
-	if err == nil {
+	fileExists, err := h.fileExists(objectPath)
+	if err != nil {
+		return fmt.Errorf("check file existence: %w", err)
+	}
+	if fileExists {
 		return ErrObjectAlreadyExists
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("stat file %v: %w", objectPath, err)
 	}
 
 	// the object doesn't exit
@@ -81,6 +81,39 @@ func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) e
 	}
 
 	return err
+}
+
+func (h *Handler) GetObjectPath(objectHash string) (string, error) {
+	objectPath, err := h.getObjectPath(objectHash)
+	if err != nil {
+		return "", fmt.Errorf("get object path: %w", err)
+	}
+
+	objectExists, err := h.fileExists(objectPath)
+	if err != nil {
+		return "", fmt.Errorf("file exists: %w", err)
+	}
+
+	if objectExists {
+		return objectPath, nil
+	} else {
+		return "", nil
+	}
+}
+
+func (h *Handler) fileExists(path string) (exists bool, err error) {
+	// https://stackoverflow.com/questions/12518876/how-to-check-if-a-file-exists-in-go
+	_, err = os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+
+	err = fmt.Errorf("stat %v: %w", path, err)
+	return false, err
 }
 
 func (h *Handler) getObjectPath(objectHash string) (string, error) {

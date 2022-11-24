@@ -34,4 +34,5 @@ func (a *API) RegisterHandler(engine *gin.Engine) {
 	objectGroup := engine.Group(objectRoute, objectMiddleware)
 
 	objectGroup.PUT("", a.putObject)
+	objectGroup.GET("", a.getObject)
 }
