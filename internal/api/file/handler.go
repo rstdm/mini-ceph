@@ -64,6 +64,7 @@ func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) e
 	if err != nil {
 		return fmt.Errorf("open multipart file header: %w", err)
 	}
+	defer h.closeAndLogError(openedFile, objectHash)
 
 	if err := h.createObject(objectPath, openedFile); err == nil {
 		return nil
@@ -100,10 +101,21 @@ func (h *Handler) createObject(objectPath string, file multipart.File) error {
 	if err != nil {
 		return fmt.Errorf("create file: %w", err)
 	}
+	defer h.closeAndLogError(createdFile, objectPath)
 
 	if _, err := io.Copy(createdFile, file); err != nil {
 		return fmt.Errorf("write content to file: %w", err)
 	}
 
 	return nil
+}
+
+func (h *Handler) closeAndLogError(c io.Closer, resourceName string) {
+	if err := c.Close(); err != nil {
+		h.sugar.Warnw("Failed to close resource",
+			"err", err,
+			"resourceType", fmt.Sprintf("%T", c),
+			"resourceName", resourceName,
+		)
+	}
 }
