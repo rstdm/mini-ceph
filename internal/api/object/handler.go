@@ -9,7 +9,10 @@ import (
 	"mime/multipart"
 )
 
-var ErrObjectAlreadyExists = file.ErrObjectAlreadyExists
+var (
+	ErrObjectAlreadyExists = file.ErrObjectAlreadyExists
+	ErrObjectDoesNotExist  = errors.New("object does not exist")
+)
 
 type Handler struct {
 	fileHandler           *file.Handler
@@ -77,8 +80,40 @@ func (h *Handler) deleteCallback(objectHash string) func() {
 	}
 }
 
-func (h *Handler) GetObjectPath(objectHash string) (string, error) {
-	return h.fileHandler.GetObjectPath(objectHash) // TODO improve
+func (h *Handler) TransferObject(objectHash string, transferObjectFunc func(objectPath string)) error {
+	objectExists, err := h.fileHandler.ObjectExists(objectHash)
+	if err != nil {
+		return fmt.Errorf("check object existence")
+	}
+	if !objectExists {
+		return ErrObjectDoesNotExist
+	}
+
+	if err := h.operationStateHandler.StartReading(objectHash); err != nil {
+		if errors.Is(err, operationstate.ErrOperationNotAllowed) {
+			// the object is in the process of being created, or it has been marked for deletion
+			return ErrObjectDoesNotExist
+		}
+
+		// unexpected error
+		return fmt.Errorf("mark object as being read: %w", err)
+	}
+	defer h.operationStateHandler.DoneReading(objectHash)
+
+	objectPath, err := h.fileHandler.GetObjectPath(objectHash)
+	if err != nil {
+		return fmt.Errorf("get object path: %w", err)
+	}
+
+	// we have to check again. Maybe the object was deleted after the last check and before the call to
+	// operationStateHandler.StartReading
+	if objectPath == "" {
+		return ErrObjectDoesNotExist
+	}
+
+	transferObjectFunc(objectPath)
+
+	return nil
 }
 
 func (h *Handler) PersistObject(objectHash string, formFile *multipart.FileHeader) error {
