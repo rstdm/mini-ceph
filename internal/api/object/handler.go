@@ -39,6 +39,27 @@ func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error)
 }
 
 func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
+	if err := h.operationStateHandler.WantDelete(objectHash); err != nil {
+		if errors.Is(err, operationstate.ErrOperationNotAllowed) {
+			// the object is currently getting deleted by another coroutine
+			return false, nil
+		}
+
+		err = fmt.Errorf("mark wantDelete operation as running: %w", err)
+		return false, err
+	}
+
+	objectExists, err := h.fileHandler.ObjectExists(objectHash)
+	if err != nil {
+		h.operationStateHandler.AbortWantDelete(objectHash)
+		err = fmt.Errorf("check object existence: %w", err)
+		return false, err
+	}
+	if !objectExists {
+		h.operationStateHandler.AbortWantDelete(objectHash)
+		return false, nil
+	}
+
 	err = h.operationStateHandler.StartDeleting(objectHash, h.deleteCallback(objectHash))
 
 	if err != nil {
@@ -114,11 +135,22 @@ func (h *Handler) TransferObject(objectHash string, transferObjectFunc func(obje
 }
 
 func (h *Handler) PersistObject(objectHash string, formFile *multipart.FileHeader) error {
+	if err := h.operationStateHandler.WantCreate(objectHash); err != nil {
+		if errors.Is(err, operationstate.ErrOperationNotAllowed) {
+			return ErrObjectAlreadyExists // another create operation is currently running
+		}
+
+		err = fmt.Errorf("mark wantCreate operation as running: %w", err)
+		return err
+	}
+
 	objectExists, err := h.fileHandler.ObjectExists(objectHash)
 	if err != nil {
+		h.operationStateHandler.AbortWantCreate(objectHash)
 		return fmt.Errorf("check object existence: %w", err)
 	}
 	if objectExists {
+		h.operationStateHandler.AbortWantCreate(objectHash)
 		return ErrObjectAlreadyExists
 	}
 
