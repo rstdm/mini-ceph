@@ -42,6 +42,22 @@ func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error)
 	return handler, nil
 }
 
+func (h *Handler) ObjectExists(objectHash string) (exists bool, err error) {
+	objectPath, err := getObjectPath(objectHash, h.objectFolder)
+	if err != nil {
+		err = fmt.Errorf("get object path: %w", err)
+		return false, err
+	}
+
+	exists, err = fileExists(objectPath)
+	if err != nil {
+		err = fmt.Errorf("check file existence: %w", err)
+		return false, err
+	}
+
+	return exists, nil
+}
+
 func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) error {
 	objectPath, err := getObjectPath(objectHash, h.objectFolder)
 	if err != nil {
