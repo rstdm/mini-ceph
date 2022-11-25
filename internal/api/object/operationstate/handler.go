@@ -12,8 +12,13 @@ var (
 )
 
 type operationState struct {
+	// the object is currently created. It must not be read or deleted
 	creating bool
-	reading  int32
+	// the object exists on disk and is currently read. It must not be deleted until all existing read operations
+	// are done.
+	reading int32
+	// the object is currently deleted or will be deleted as soon as the last read operation finishes. New read
+	// operations must not be allowed. This callback will be called when the last read operation finishes.
 	deleting func()
 }
 
