@@ -132,7 +132,7 @@ func (h *Handler) DoneDeleting(objectHash string) {
 // Helper functions
 
 func (h *Handler) setState(objectHash string, state operationState) {
-	operationsRunning := state.creating || state.reading == 0 || state.deleting == nil
+	operationsRunning := state.creating || state.reading > 0 || state.deleting != nil
 	if operationsRunning {
 		h.objectStates[objectHash] = state
 
