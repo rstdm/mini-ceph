@@ -34,6 +34,11 @@ func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error)
 		return nil, err
 	}
 
+	if err := purgeObjects(objectFolder, sugar); err != nil {
+		err = fmt.Errorf("purge not persisted objects: %w", err)
+		return nil, err
+	}
+
 	handler := &Handler{
 		objectFolder: absFolder,
 		sugar:        sugar,
@@ -134,4 +139,46 @@ func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
 	// err is an unexpected error
 	err = fmt.Errorf("remove object: %w", err)
 	return false, err
+}
+
+func purgeObjects(objectFolder string, sugar *zap.SugaredLogger) error {
+	dirEntries, err := os.ReadDir(objectFolder)
+	if err != nil {
+		return fmt.Errorf("list files in object dir: %w", err)
+	}
+
+	var merr error
+	for _, entry := range dirEntries {
+		if entry.IsDir() {
+			continue
+		}
+
+		info, err := entry.Info()
+		if err != nil {
+			err = fmt.Errorf("read file info of object %v: %w", entry.Name(), err)
+			merr = multierr.Append(merr, err)
+			continue
+		}
+
+		if isMarkedAsPersisted(info) {
+			continue
+		}
+
+		path := filepath.Join(objectFolder, entry.Name())
+		sugar.Infow("Deleting object that is not marked as persisted.",
+			"object", entry.Name(),
+			"path", path,
+		)
+
+		if err := os.Remove(path); err != nil {
+			err = fmt.Errorf("remove %v: %w", path, err)
+			merr = multierr.Append(merr, err)
+		}
+	}
+
+	if merr != nil {
+		return fmt.Errorf("process files: %w", err)
+	}
+
+	return nil
 }

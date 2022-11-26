@@ -45,3 +45,7 @@ func markAsPersisted(file *os.File) error {
 
 	return nil
 }
+
+func isMarkedAsPersisted(fileInfo fs.FileInfo) bool {
+	return fileInfo.Mode() == persistedFileMode
+}
