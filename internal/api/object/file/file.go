@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"io"
+	"io/fs"
 	"os"
 )
+
+// persistedFileMode will be set for all files that should be kept. 0400 is read access for the current user and
+// no access for anyone else. See https://wiki.ubuntuusers.de/chmod/ for details.
+const persistedFileMode fs.FileMode = 0400
 
 func fileExists(path string) (exists bool, err error) {
 	// https://stackoverflow.com/questions/12518876/how-to-check-if-a-file-exists-in-go
@@ -31,4 +36,12 @@ func closeAndLogError(c io.Closer, resourceName string, sugar *zap.SugaredLogger
 			"resourceName", resourceName,
 		)
 	}
+}
+
+func markAsPersisted(file *os.File) error {
+	if err := file.Chmod(persistedFileMode); err != nil {
+		return fmt.Errorf("chmod %v: %w", persistedFileMode, err)
+	}
+
+	return nil
 }

@@ -34,5 +34,9 @@ func createObject(objectPath string, file multipart.File, sugar *zap.SugaredLogg
 		return fmt.Errorf("write content to file: %w", err)
 	}
 
+	if err := markAsPersisted(createdFile); err != nil {
+		return fmt.Errorf("mark as persisted: %w", err)
+	}
+
 	return nil
 }
