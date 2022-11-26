@@ -141,6 +141,19 @@ func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
 	return false, err
 }
 
+func (h *Handler) RemovePersistedFlag(objectHash string) error {
+	objectPath, err := getObjectPath(objectHash, h.objectFolder)
+	if err != nil {
+		return fmt.Errorf("get object path: %w", err)
+	}
+
+	if err := removePersistedFlag(objectPath); err != nil {
+		return fmt.Errorf("remove persisted flag: %w", err)
+	}
+
+	return nil
+}
+
 func purgeObjects(objectFolder string, sugar *zap.SugaredLogger) error {
 	dirEntries, err := os.ReadDir(objectFolder)
 	if err != nil {

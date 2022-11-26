@@ -60,15 +60,9 @@ func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
 		return false, nil
 	}
 
-	err = h.operationStateHandler.StartDeleting(objectHash, h.deleteCallback(objectHash))
+	mustDelay, err := h.operationStateHandler.StartDeleting(objectHash, h.deleteCallback(objectHash))
 
 	if err != nil {
-		if errors.Is(err, operationstate.ErrDeletionMustBeDelayed) {
-			// pretend that the object has been deleted
-			// to the outside world it looks as if the object is gone (e.g. it can no longer be read)
-			return true, nil
-		}
-
 		if errors.Is(err, operationstate.ErrOperationNotAllowed) {
 			// pretend that the object doesn't exist
 			// the object is either in the process of being created or it has already been marked for deletion
@@ -79,7 +73,18 @@ func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
 		err = fmt.Errorf("mark delete operation as running: %w", err)
 		return false, err
 	}
+	if mustDelay {
+		// pretend that the object has been deleted
+		// to the outside world it looks as if the object is gone (e.g. it can no longer be read)
+		if err := h.fileHandler.RemovePersistedFlag(objectHash); err != nil {
+			err = fmt.Errorf("remove persisted flag: %w", err)
+			return false, err
+		}
 
+		return true, nil
+	}
+
+	// DoneDeleting must not be called here if mustDelay is true. It will be called by the deleteCallback
 	defer h.operationStateHandler.DoneDeleting(objectHash)
 
 	return h.fileHandler.DeleteObject(objectHash)

@@ -7,8 +7,7 @@ import (
 )
 
 var (
-	ErrOperationNotAllowed   = errors.New("operation not allowed")
-	ErrDeletionMustBeDelayed = errors.New("delete operation must be delayed until all reads are done")
+	ErrOperationNotAllowed = errors.New("operation not allowed")
 )
 
 type operationState struct {
@@ -161,7 +160,7 @@ func (h *Handler) AbortWantDelete(objectHash string) {
 	h.setState(objectHash, state)
 }
 
-func (h *Handler) StartDeleting(objectHash string, deleteCallback func()) error {
+func (h *Handler) StartDeleting(objectHash string, deleteCallback func()) (mustDelay bool, err error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -169,7 +168,7 @@ func (h *Handler) StartDeleting(objectHash string, deleteCallback func()) error 
 	state.wantDelete = false
 	if state.creating || state.deleting != nil {
 		h.setState(objectHash, state)
-		return ErrOperationNotAllowed
+		return false, ErrOperationNotAllowed
 	}
 
 	// set deleting to true. This will prevent further create, read and delete operations
@@ -177,11 +176,8 @@ func (h *Handler) StartDeleting(objectHash string, deleteCallback func()) error 
 	state.deleting = deleteCallback
 	h.setState(objectHash, state)
 
-	if state.reading > 0 {
-		return ErrDeletionMustBeDelayed
-	}
-
-	return nil
+	mustDelay = state.reading > 0
+	return mustDelay, nil
 }
 
 func (h *Handler) DoneDeleting(objectHash string) {
