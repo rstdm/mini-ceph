@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rstdm/glados/internal/api"
-	"github.com/rstdm/glados/internal/flags"
+	"github.com/rstdm/glados/internal/configuration"
 	"github.com/rstdm/glados/internal/server/middleware"
 	"go.uber.org/zap"
 	"net/http"
@@ -57,7 +57,7 @@ func (s *Server) StopGraceful() {
 	}
 }
 
-func New(flagValues flags.FlagValues, sugar *zap.SugaredLogger) (*Server, error) {
+func New(flagValues configuration.Configuration, sugar *zap.SugaredLogger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()

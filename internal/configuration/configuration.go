@@ -1,4 +1,4 @@
-package flags
+package configuration
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-type FlagValues struct {
+type Configuration struct {
 	UseProductionLogger bool
 	Port                int
 	BearerToken         string
@@ -20,8 +20,8 @@ type FlagValues struct {
 	PlacementGroups map[int][]int
 }
 
-func Parse() (FlagValues, error) {
-	values := FlagValues{}
+func Parse() (Configuration, error) {
+	values := Configuration{}
 
 	flag.BoolVar(&values.UseProductionLogger, "useProductionLogger", false, "Determines weather the logger "+
 		"should produce json output or human readable output")
@@ -51,21 +51,21 @@ func Parse() (FlagValues, error) {
 	nodeHosts, err := parseNodes(rawNodes)
 	if err != nil {
 		err = fmt.Errorf("parse network adresses of nodes (argument 2): %w", err)
-		return FlagValues{}, err
+		return Configuration{}, err
 	}
 	values.NodeHosts = nodeHosts
 
 	nodeID, err := parseNodeID(err, rawNodeID, values.NodeHosts)
 	if err != nil {
 		err = fmt.Errorf("parse NodeID (argument 1): %w", err)
-		return FlagValues{}, err
+		return Configuration{}, err
 	}
 	values.NodeID = nodeID
 
 	placementGroups, err := parsePlacementGroups(rawPlacementGroups, values.NodeHosts)
 	if err != nil {
 		err = fmt.Errorf("parse placement groups (argument 3): %w", err)
-		return FlagValues{}, err
+		return Configuration{}, err
 	}
 	values.PlacementGroups = placementGroups
 

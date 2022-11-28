@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/rstdm/glados/internal/flags"
+	"github.com/rstdm/glados/internal/configuration"
 	"github.com/rstdm/glados/internal/logger"
 	"github.com/rstdm/glados/internal/server"
 	"os"
 )
 
 func main() {
-	flagValues, err := flags.Parse()
+	flagValues, err := configuration.Parse()
 	if err != nil {
-		fmt.Printf("Failed to parse flags: %v\n", err)
+		fmt.Printf("Failed to parse configuration: %v\n", err)
 		fmt.Println("Exiting.")
 		os.Exit(1)
 	}
