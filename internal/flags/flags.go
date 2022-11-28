@@ -1,4 +1,4 @@
-package arguments
+package flags
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ type Arguments struct {
 
 func Parse(args []string) (Arguments, error) {
 	if len(args) != 3 {
-		err := errors.New("this program must be called with exactly three arguments. 1) the current node id " +
+		err := errors.New("this program must be called with exactly three flags. 1) the current node id " +
 			"(positive integer) 2) network addresses for all nodes (json string) 3) mapping of placement groups to nodes " +
 			"(json string)")
 		return Arguments{}, err

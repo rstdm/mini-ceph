@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/rstdm/glados/internal/arguments"
+	"github.com/rstdm/glados/internal/flags"
 	"github.com/rstdm/glados/internal/logger"
 	"github.com/rstdm/glados/internal/server"
 	"os"
@@ -28,9 +28,9 @@ func main() {
 		"still be available for download.")
 	flag.Parse()
 
-	args, err := arguments.Parse(flag.Args())
+	args, err := flags.Parse(flag.Args())
 	if err != nil {
-		fmt.Printf("Failed to parse arguments: %v\n", err)
+		fmt.Printf("Failed to parse flags: %v\n", err)
 		fmt.Println("Exiting.")
 		os.Exit(1)
 	}
