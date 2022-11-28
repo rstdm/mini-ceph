@@ -2,7 +2,6 @@ package flags
 
 import (
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"net/url"
@@ -16,9 +15,9 @@ type FlagValues struct {
 	ObjectFolder        string
 	MaxObjectSizeBytes  int64
 
-	NodeID          *int
-	NodeHosts       *map[int]string
-	PlacementGroups *map[int][]int
+	NodeID          int
+	NodeHosts       map[int]string
+	PlacementGroups map[int][]int
 }
 
 func Parse() (FlagValues, error) {
@@ -34,45 +33,41 @@ func Parse() (FlagValues, error) {
 	flag.Int64Var(&values.MaxObjectSizeBytes, "maxObjectSizeBytes", 20000000, "Objects that are bigger than "+
 		"the specified size can not be persisted. Note that this doesn't influence already created objects which will "+
 		"still be available for download.")
+
+	// these values must be parsed / validated manually
+	var rawNodeID string // we cannot use an integer, because we have to detect absent values; the flag library doesn't support *int
+	var rawNodes string
+	var rawPlacementGroups string
+
+	flag.StringVar(&rawNodeID, "nodeID", "", "non-negative integer which specifies the ID of the current node")
+	flag.StringVar(&rawNodes, "nodes", "", "json encoded key value map which maps the ID of each node "+
+		"to a host. The host must include the schema. Example: {\"0\": \"http://localhost:5000\"}")
+	flag.StringVar(&rawPlacementGroups, "placementGroups", "", "json encoded map of placement groups "+
+		"(keys) and the node IDs of that particular placement group. Example which maps node 1 and 2 to placement group "+
+		"0: {\"0\": [1, 2]}")
+
 	flag.Parse()
 
-	if len(flag.Args()) != 3 {
-		err := errors.New("this program must be called with exactly three flags. 1) the current node id " +
-			"(positive integer) 2) network addresses for all nodes (json string) 3) mapping of placement groups to nodes " +
-			"(json string)")
-		return FlagValues{}, err
-	}
-
-	rawNodeID := flag.Arg(0)
-	rawNodes := flag.Arg(1)
-	rawPlacementGroups := flag.Arg(2)
-
-	nodes, err := parseNodes(rawNodes)
+	nodeHosts, err := parseNodes(rawNodes)
 	if err != nil {
 		err = fmt.Errorf("parse network adresses of nodes (argument 2): %w", err)
 		return FlagValues{}, err
 	}
+	values.NodeHosts = nodeHosts
 
-	nodeID, err := parseNodeID(err, rawNodeID, nodes)
+	nodeID, err := parseNodeID(err, rawNodeID, values.NodeHosts)
 	if err != nil {
 		err = fmt.Errorf("parse NodeID (argument 1): %w", err)
 		return FlagValues{}, err
 	}
+	values.NodeID = nodeID
 
-	placementGroups, err := parsePlacementGroups(rawPlacementGroups, nodes)
+	placementGroups, err := parsePlacementGroups(rawPlacementGroups, values.NodeHosts)
 	if err != nil {
 		err = fmt.Errorf("parse placement groups (argument 3): %w", err)
 		return FlagValues{}, err
 	}
-
-	/*a := FlagValues{ // TODO
-		NodeID:          NodeID,
-		NodeHosts:       nodes,
-		PlacementGroups: PlacementGroups,
-	}*/
-	_ = nodes
-	_ = nodeID
-	_ = placementGroups
+	values.PlacementGroups = placementGroups
 
 	return values, nil
 }
