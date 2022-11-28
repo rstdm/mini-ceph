@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rstdm/glados/internal/api"
+	"github.com/rstdm/glados/internal/flags"
 	"github.com/rstdm/glados/internal/server/middleware"
 	"go.uber.org/zap"
 	"net/http"
@@ -56,7 +57,7 @@ func (s *Server) StopGraceful() {
 	}
 }
 
-func New(port int, bearerToken string, objectFolder string, maxObjectSizeBytes int64, useProductionLogger bool, sugar *zap.SugaredLogger) (*Server, error) {
+func New(flagValues flags.FlagValues, sugar *zap.SugaredLogger) (*Server, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
@@ -64,10 +65,10 @@ func New(port int, bearerToken string, objectFolder string, maxObjectSizeBytes i
 		return nil, fmt.Errorf("set trusted proxies to nil: %w", err)
 	}
 
-	middlewares := buildMiddlewares(bearerToken, useProductionLogger, sugar)
+	middlewares := buildMiddlewares(flagValues.BearerToken, flagValues.UseProductionLogger, sugar)
 	router.Use(middlewares...)
 
-	a, err := api.NewAPI(objectFolder, maxObjectSizeBytes, sugar)
+	a, err := api.NewAPI(flagValues.ObjectFolder, flagValues.MaxObjectSizeBytes, sugar)
 	if err != nil {
 		err = fmt.Errorf("create api: %w", err)
 		return nil, err
@@ -75,7 +76,7 @@ func New(port int, bearerToken string, objectFolder string, maxObjectSizeBytes i
 	a.RegisterHandler(router)
 
 	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%v", port),
+		Addr:    fmt.Sprintf(":%v", flagValues.Port),
 		Handler: router,
 	}
 	server := &Server{

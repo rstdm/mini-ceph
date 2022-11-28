@@ -3,53 +3,78 @@ package flags
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"net/url"
 	"strconv"
 )
 
-type Arguments struct {
-	nodeID          int
-	nodeHosts       map[int]string
-	placementGroups map[int][]int
+type FlagValues struct {
+	UseProductionLogger bool
+	Port                int
+	BearerToken         string
+	ObjectFolder        string
+	MaxObjectSizeBytes  int64
+
+	NodeID          *int
+	NodeHosts       *map[int]string
+	PlacementGroups *map[int][]int
 }
 
-func Parse(args []string) (Arguments, error) {
-	if len(args) != 3 {
+func Parse() (FlagValues, error) {
+	values := FlagValues{}
+
+	flag.BoolVar(&values.UseProductionLogger, "useProductionLogger", false, "Determines weather the logger "+
+		"should produce json output or human readable output")
+	flag.IntVar(&values.Port, "port", 5000, "Port on which to serve http requests.")
+	flag.StringVar(&values.BearerToken, "bearerToken", "", "BearerToken that is used to authorize all "+
+		"requests. Every request will be accepted without authorization if the token is empty.")
+	flag.StringVar(&values.ObjectFolder, "objectFolder", "./data", "Relative path to the folder that is "+
+		"used for object storage and retrieval")
+	flag.Int64Var(&values.MaxObjectSizeBytes, "maxObjectSizeBytes", 20000000, "Objects that are bigger than "+
+		"the specified size can not be persisted. Note that this doesn't influence already created objects which will "+
+		"still be available for download.")
+	flag.Parse()
+
+	if len(flag.Args()) != 3 {
 		err := errors.New("this program must be called with exactly three flags. 1) the current node id " +
 			"(positive integer) 2) network addresses for all nodes (json string) 3) mapping of placement groups to nodes " +
 			"(json string)")
-		return Arguments{}, err
+		return FlagValues{}, err
 	}
 
-	rawNodeID := args[0]
-	rawNodes := args[1]
-	rawPlacementGroups := args[2]
+	rawNodeID := flag.Arg(0)
+	rawNodes := flag.Arg(1)
+	rawPlacementGroups := flag.Arg(2)
 
 	nodes, err := parseNodes(rawNodes)
 	if err != nil {
 		err = fmt.Errorf("parse network adresses of nodes (argument 2): %w", err)
-		return Arguments{}, err
+		return FlagValues{}, err
 	}
 
 	nodeID, err := parseNodeID(err, rawNodeID, nodes)
 	if err != nil {
-		err = fmt.Errorf("parse nodeID (argument 1): %w", err)
-		return Arguments{}, err
+		err = fmt.Errorf("parse NodeID (argument 1): %w", err)
+		return FlagValues{}, err
 	}
 
 	placementGroups, err := parsePlacementGroups(rawPlacementGroups, nodes)
 	if err != nil {
 		err = fmt.Errorf("parse placement groups (argument 3): %w", err)
-		return Arguments{}, err
+		return FlagValues{}, err
 	}
 
-	a := Arguments{
-		nodeID:          nodeID,
-		nodeHosts:       nodes,
-		placementGroups: placementGroups,
-	}
-	return a, nil
+	/*a := FlagValues{ // TODO
+		NodeID:          NodeID,
+		NodeHosts:       nodes,
+		PlacementGroups: PlacementGroups,
+	}*/
+	_ = nodes
+	_ = nodeID
+	_ = placementGroups
+
+	return values, nil
 }
 
 func parseNodes(rawNodes string) (map[int]string, error) {
@@ -85,7 +110,7 @@ func parseNodeID(err error, rawNodeID string, nodes map[int]string) (int, error)
 		return 0, fmt.Errorf("rawNodeID '%v' is no valid integer: %w", rawNodeID, err)
 	}
 	if nodeID < 0 {
-		return 0, fmt.Errorf("nodeID %v must be >= 0", nodeID)
+		return 0, fmt.Errorf("NodeID %v must be >= 0", nodeID)
 	}
 
 	if _, ok := nodes[nodeID]; !ok {
