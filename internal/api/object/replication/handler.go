@@ -60,7 +60,7 @@ func (h *Handler) replicateToHost(objectHash string, objectContent []byte, host 
 	reader := bytes.NewReader(objectContent)
 
 	response, err := h.client.R().
-		SetFileReader("file", "", reader).
+		SetFileReader("file", "file", reader).
 		Put(url)
 	if err != nil {
 		return fmt.Errorf("PUT %v: %w", url, err)
