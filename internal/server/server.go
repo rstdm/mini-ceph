@@ -73,12 +73,12 @@ func New(flagValues configuration.Configuration, sugar *zap.SugaredLogger) (*Ser
 	}
 	router.Use(middlewares...)
 
-	a, err := api.NewAPI(flagValues.ObjectFolder, flagValues.MaxObjectSizeBytes, sugar)
+	a, err := api.NewAPI(flagValues, sugar)
 	if err != nil {
 		err = fmt.Errorf("create api: %w", err)
 		return nil, err
 	}
-	a.RegisterHandler(router, flagValues.UserBearerToken, sugar)
+	a.RegisterHandler(router)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", flagValues.Port),
