@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rstdm/glados/internal/api/middleware"
 	"github.com/rstdm/glados/internal/api/object"
+	"github.com/rstdm/glados/internal/api/object/distribution"
 	"github.com/rstdm/glados/internal/configuration"
 	"go.uber.org/zap"
 )
@@ -13,14 +14,16 @@ const objectRoute = "object/:" + middleware.ObjectParam
 const clusterRoute = "internal/:" + middleware.ObjectParam
 
 type API struct {
-	objectHandler      *object.Handler
-	maxObjectSizeBytes int64
-	userBearerToken    string
-	clusterBearerToken string
-	sugar              *zap.SugaredLogger
+	objectHandler       *object.Handler
+	distributionHandler *distribution.Handler
+	maxObjectSizeBytes  int64
+	userBearerToken     string
+	clusterBearerToken  string
+	sugar               *zap.SugaredLogger
 }
 
 func NewAPI(config configuration.Configuration, sugar *zap.SugaredLogger) (*API, error) {
+	distributionHandler := distribution.NewHandler(config.NodeID, config.NodeHosts, config.PlacementGroups)
 	objectHandler, err := object.NewHandler(config.ObjectFolder, sugar)
 	if err != nil {
 		err = fmt.Errorf("create object handler: %w", err)
@@ -28,11 +31,12 @@ func NewAPI(config configuration.Configuration, sugar *zap.SugaredLogger) (*API,
 	}
 
 	api := &API{
-		objectHandler:      objectHandler,
-		maxObjectSizeBytes: config.MaxObjectSizeBytes,
-		userBearerToken:    config.UserBearerToken,
-		clusterBearerToken: config.ClusterBearerToken,
-		sugar:              sugar,
+		objectHandler:       objectHandler,
+		distributionHandler: distributionHandler,
+		maxObjectSizeBytes:  config.MaxObjectSizeBytes,
+		userBearerToken:     config.UserBearerToken,
+		clusterBearerToken:  config.ClusterBearerToken,
+		sugar:               sugar,
 	}
 
 	return api, err
@@ -50,7 +54,7 @@ func (a *API) registerObjectRoutes(engine *gin.Engine) {
 	} else {
 		a.sugar.Warn("No userBearerToken has been specified. All user level API endpoints are exposed without authentication.")
 	}
-	middlewares = append(middlewares, middleware.ObjectMiddleware)
+	middlewares = append(middlewares, middleware.ObjectMiddleware, middleware.DistributionMiddleware(false, a.distributionHandler))
 
 	objectGroup := engine.Group(objectRoute, middlewares...)
 
@@ -66,7 +70,7 @@ func (a *API) registerClusterRoutes(engine *gin.Engine) {
 	} else {
 		a.sugar.Warn("No clusterBearerToken has been specified. All user level API endpoints are exposed without authentication.")
 	}
-	middlewares = append(middlewares, middleware.ObjectMiddleware)
+	middlewares = append(middlewares, middleware.ObjectMiddleware, middleware.DistributionMiddleware(true, a.distributionHandler))
 
 	clusterGroup := engine.Group(clusterRoute, middlewares...)
 
