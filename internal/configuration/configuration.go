@@ -156,7 +156,7 @@ func loadPersistedConfiguration(persistedConfigurationPath string) (*persistedCo
 }
 
 func persistConfiguration(pc persistedConfiguration, persistedConfigurationPath string) error {
-	encodedData, err := json.Marshal(pc)
+	encodedData, err := json.MarshalIndent(pc, "", "  ") // use two spaces for indention
 	if err != nil {
 		return fmt.Errorf("json encode: %w", err)
 	}
