@@ -28,7 +28,8 @@ func (h *Handler) GetDistribution(objectHash string) (Distribution, error) {
 		return Distribution{}, err
 	}
 
-	pgIdx := binary.BigEndian.Uint32(binaryHash) % uint32(len(h.placementGroups))
+	lastFourBytes := binaryHash[len(binaryHash)-4:]
+	pgIdx := binary.BigEndian.Uint32(lastFourBytes) % uint32(len(h.placementGroups))
 	pg := h.placementGroups[pgIdx]
 
 	isPrimary := pg[0] == h.nodeID
