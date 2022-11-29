@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rstdm/glados/internal/api/middleware"
 	"github.com/rstdm/glados/internal/api/object"
 	"net/http"
 )
@@ -24,7 +25,7 @@ func (a *API) putObject(c *gin.Context) {
 		return
 	}
 
-	objectHash := getObjectHash(c)
+	objectHash := middleware.getObjectHash(c)
 
 	err = a.objectHandler.PersistObject(objectHash, formFile)
 	if err == nil {

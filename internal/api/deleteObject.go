@@ -3,11 +3,12 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rstdm/glados/internal/api/middleware"
 	"net/http"
 )
 
 func (a *API) deleteObject(c *gin.Context) {
-	objectHash := getObjectHash(c)
+	objectHash := middleware.getObjectHash(c)
 
 	didExist, err := a.objectHandler.DeleteObject(objectHash)
 	if err != nil {

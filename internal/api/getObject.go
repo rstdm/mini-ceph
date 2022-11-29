@@ -4,12 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rstdm/glados/internal/api/middleware"
 	"github.com/rstdm/glados/internal/api/object"
 	"net/http"
 )
 
 func (a *API) getObject(c *gin.Context) {
-	objectHash := getObjectHash(c)
+	objectHash := middleware.getObjectHash(c)
 
 	err := a.objectHandler.TransferObject(objectHash, a.transferObjectCallback(c))
 	if err == nil {

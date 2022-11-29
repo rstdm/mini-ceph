@@ -1,7 +1,8 @@
-package api
+package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/rstdm/glados/internal/api"
 	"github.com/rstdm/glados/internal/api/object/hash"
 	"net/http"
 )
@@ -9,7 +10,7 @@ import (
 const objectHashKey = "objectHash"
 
 func objectMiddleware(c *gin.Context) {
-	objectHash := c.Param(objectParam)
+	objectHash := c.Param(api.objectParam)
 	if !hash.IsObjectHash(objectHash) {
 		c.String(http.StatusBadRequest, "Missing or invalid object hash")
 		c.Abort()

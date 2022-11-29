@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rstdm/glados/internal/api/middleware"
 	"github.com/rstdm/glados/internal/api/object"
 	"go.uber.org/zap"
 )
@@ -31,7 +32,7 @@ func NewAPI(objectFolder string, maxObjectSizeBytes int64, sugar *zap.SugaredLog
 }
 
 func (a *API) RegisterHandler(engine *gin.Engine) {
-	objectGroup := engine.Group(objectRoute, objectMiddleware)
+	objectGroup := engine.Group(objectRoute, middleware.objectMiddleware)
 
 	objectGroup.PUT("", a.putObject)
 	objectGroup.GET("", a.getObject)
