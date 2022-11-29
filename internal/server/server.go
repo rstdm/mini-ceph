@@ -78,7 +78,7 @@ func New(flagValues configuration.Configuration, sugar *zap.SugaredLogger) (*Ser
 		err = fmt.Errorf("create api: %w", err)
 		return nil, err
 	}
-	a.RegisterHandler(router)
+	a.RegisterHandler(router, flagValues.UserBearerToken, sugar)
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", flagValues.Port),
