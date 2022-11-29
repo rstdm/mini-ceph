@@ -232,7 +232,23 @@ func parsePlacementGroups(rawPlacementGroups string, nodes []string) ([][]int, e
 		return nil, err
 	}
 
+	if len(parsedPlacementGroups) == 0 {
+		err := errors.New("at least one placement group has to be specified")
+		return nil, err
+	}
+
+	numReplicas := len(parsedPlacementGroups[0])
+	if numReplicas == 0 {
+		err := errors.New("placement groups have to contain at least one node")
+		return nil, err
+	}
+
 	for placementGroup, nodesOfPG := range parsedPlacementGroups {
+		if len(nodesOfPG) != numReplicas {
+			err := fmt.Errorf("all placement groups must have the same size. PG %v has size %v, expected size %v", placementGroup, len(nodesOfPG), numReplicas)
+			return nil, err
+		}
+
 		for _, nodeOfPG := range nodesOfPG {
 			if nodeOfPG >= len(nodes) {
 				err := fmt.Errorf("node %v in placement group %v is not mentioned in the list of node "+
