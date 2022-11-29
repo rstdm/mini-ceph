@@ -8,7 +8,7 @@ import (
 )
 
 func (a *API) deleteObject(c *gin.Context) {
-	objectHash := middleware.getObjectHash(c)
+	objectHash := middleware.GetObjectHash(c)
 
 	didExist, err := a.objectHandler.DeleteObject(objectHash)
 	if err != nil {

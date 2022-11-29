@@ -25,7 +25,7 @@ func (a *API) putObject(c *gin.Context) {
 		return
 	}
 
-	objectHash := middleware.getObjectHash(c)
+	objectHash := middleware.GetObjectHash(c)
 
 	err = a.objectHandler.PersistObject(objectHash, formFile)
 	if err == nil {

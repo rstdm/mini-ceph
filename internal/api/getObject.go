@@ -10,7 +10,7 @@ import (
 )
 
 func (a *API) getObject(c *gin.Context) {
-	objectHash := middleware.getObjectHash(c)
+	objectHash := middleware.GetObjectHash(c)
 
 	err := a.objectHandler.TransferObject(objectHash, a.transferObjectCallback(c))
 	if err == nil {
