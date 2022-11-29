@@ -65,7 +65,12 @@ func New(flagValues configuration.Configuration, sugar *zap.SugaredLogger) (*Ser
 		return nil, fmt.Errorf("set trusted proxies to nil: %w", err)
 	}
 
-	middlewares := buildMiddlewares(flagValues.UserBearerToken, flagValues.UseProductionLogger, sugar)
+	var middlewares []gin.HandlerFunc
+	if flagValues.UseProductionLogger {
+		middlewares = []gin.HandlerFunc{middleware.ProductionLogger(sugar), middleware.ProductionRecovery(sugar)}
+	} else {
+		middlewares = []gin.HandlerFunc{gin.Logger(), gin.Recovery()}
+	}
 	router.Use(middlewares...)
 
 	a, err := api.NewAPI(flagValues.ObjectFolder, flagValues.MaxObjectSizeBytes, sugar)
@@ -86,22 +91,4 @@ func New(flagValues configuration.Configuration, sugar *zap.SugaredLogger) (*Ser
 	}
 
 	return server, nil
-}
-
-func buildMiddlewares(bearerToken string, useProductionLogger bool, sugar *zap.SugaredLogger) []gin.HandlerFunc {
-	var middlewares []gin.HandlerFunc
-
-	if useProductionLogger {
-		middlewares = append(middlewares, middleware.ProductionLogger(sugar), middleware.ProductionRecovery(sugar))
-	} else {
-		middlewares = append(middlewares, gin.Logger(), gin.Recovery())
-	}
-
-	if bearerToken == "" {
-		sugar.Warn("No bearer token has been set and therefore all endpoints can be accessed without validation.")
-	} else {
-		middlewares = append(middlewares, middleware.BearerAuthentication(bearerToken))
-	}
-
-	return middlewares
 }
