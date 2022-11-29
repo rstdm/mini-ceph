@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 )
@@ -63,7 +62,7 @@ func (h *Handler) ObjectExists(objectHash string) (exists bool, err error) {
 	return exists, nil
 }
 
-func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) error {
+func (h *Handler) PersistObject(objectHash string, objectContent []byte) error {
 	objectPath, err := getObjectPath(objectHash, h.objectFolder)
 	if err != nil {
 		return fmt.Errorf("get object path: %w", err)
@@ -79,13 +78,7 @@ func (h *Handler) PersistObject(objectHash string, file *multipart.FileHeader) e
 
 	// the object doesn't exit
 
-	openedFile, err := file.Open()
-	if err != nil {
-		return fmt.Errorf("open multipart file header: %w", err)
-	}
-	defer closeAndLogError(openedFile, objectHash, h.sugar)
-
-	if err := createObject(objectPath, openedFile, h.sugar); err == nil {
+	if err := createObject(objectPath, objectContent, h.sugar); err == nil {
 		return nil
 	}
 

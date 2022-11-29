@@ -3,9 +3,12 @@ package object
 import (
 	"errors"
 	"fmt"
+	"github.com/rstdm/glados/internal/api/object/distribution"
 	"github.com/rstdm/glados/internal/api/object/file"
 	"github.com/rstdm/glados/internal/api/object/operationstate"
+	"github.com/rstdm/glados/internal/api/object/replication"
 	"go.uber.org/zap"
+	"io"
 	"mime/multipart"
 )
 
@@ -15,12 +18,15 @@ var (
 )
 
 type Handler struct {
+	distributionHandler   *distribution.Handler
+	replicationHandler    *replication.Handler
 	fileHandler           *file.Handler
 	operationStateHandler *operationstate.Handler
 	sugar                 *zap.SugaredLogger
 }
 
-func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error) {
+func NewHandler(objectFolder string, clusterBearerToken string, distributionHandler *distribution.Handler, sugar *zap.SugaredLogger) (*Handler, error) {
+	replicationHandler := replication.NewHandler(clusterBearerToken, sugar)
 	fileHandler, err := file.NewHandler(objectFolder, sugar)
 	if err != nil {
 		err = fmt.Errorf("create file handler: %w", err)
@@ -30,6 +36,8 @@ func NewHandler(objectFolder string, sugar *zap.SugaredLogger) (*Handler, error)
 	operationStateHandler := operationstate.NewHandler(sugar)
 
 	objectHandler := &Handler{
+		distributionHandler:   distributionHandler,
+		replicationHandler:    replicationHandler,
 		fileHandler:           fileHandler,
 		operationStateHandler: operationStateHandler,
 		sugar:                 sugar,
@@ -87,7 +95,25 @@ func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
 	// DoneDeleting must not be called here if mustDelay is true. It will be called by the deleteCallback
 	defer h.operationStateHandler.DoneDeleting(objectHash)
 
-	return h.fileHandler.DeleteObject(objectHash)
+	dist, err := h.distributionHandler.GetDistribution(objectHash)
+	if err != nil {
+		err = fmt.Errorf("calculate distribution: %w", err)
+		return false, err
+	}
+
+	if dist.IsPrimary {
+		if err := h.replicationHandler.Delete(objectHash, dist.SlaveHosts); err != nil {
+			h.sugar.Errorw("Failed to delete replicated copies of object", "err", err, "objectHash", objectHash)
+		}
+	}
+
+	objectExisted, err := h.fileHandler.DeleteObject(objectHash)
+	if err != nil {
+		err = fmt.Errorf("delete local replica: %w", err)
+		return false, err
+	}
+
+	return objectExisted, nil
 }
 
 func (h *Handler) deleteCallback(objectHash string) func() {
@@ -176,5 +202,33 @@ func (h *Handler) PersistObject(objectHash string, formFile *multipart.FileHeade
 	}
 	defer h.operationStateHandler.DoneCreating(objectHash)
 
-	return h.fileHandler.PersistObject(objectHash, formFile)
+	openedFile, err := formFile.Open()
+	if err != nil {
+		return fmt.Errorf("open form file: %w", err)
+	}
+	defer file.CloseAndLogError(openedFile, "formFile", h.sugar)
+
+	objectContent, err := io.ReadAll(openedFile)
+	if err != nil {
+		return fmt.Errorf("read formFile into memory: %w", err)
+	}
+
+	dist, err := h.distributionHandler.GetDistribution(objectHash)
+	if err != nil {
+		err = fmt.Errorf("calculate distribution: %w", err)
+		return err
+	}
+
+	if dist.IsPrimary {
+		if err := h.replicationHandler.Replicate(objectHash, objectContent, dist.SlaveHosts); err != nil {
+			return fmt.Errorf("replicate object to slaves: %w", err)
+		}
+	}
+
+	if err := h.fileHandler.PersistObject(objectHash, objectContent); err != nil {
+		return fmt.Errorf("persist object locally: %w", err)
+
+	}
+
+	return nil
 }

@@ -34,7 +34,7 @@ func fileExists(path string) (exists bool, err error) {
 	return false, err
 }
 
-func closeAndLogError(c io.Closer, resourceName string, sugar *zap.SugaredLogger) {
+func CloseAndLogError(c io.Closer, resourceName string, sugar *zap.SugaredLogger) {
 	if err := c.Close(); err != nil {
 		sugar.Warnw("Failed to close resource",
 			"err", err,

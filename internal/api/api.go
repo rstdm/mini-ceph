@@ -24,7 +24,7 @@ type API struct {
 
 func NewAPI(config configuration.Configuration, sugar *zap.SugaredLogger) (*API, error) {
 	distributionHandler := distribution.NewHandler(config.NodeID, config.NodeHosts, config.PlacementGroups)
-	objectHandler, err := object.NewHandler(config.ObjectFolder, sugar)
+	objectHandler, err := object.NewHandler(config.ObjectFolder, config.ClusterBearerToken, distributionHandler, sugar)
 	if err != nil {
 		err = fmt.Errorf("create object handler: %w", err)
 		return nil, err

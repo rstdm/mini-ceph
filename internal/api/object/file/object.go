@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/rstdm/glados/internal/api/object/hash"
 	"go.uber.org/zap"
-	"io"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 )
@@ -23,14 +21,14 @@ func getObjectPath(objectHash string, objectFolder string) (string, error) {
 	return objectPath, nil
 }
 
-func createObject(objectPath string, file multipart.File, sugar *zap.SugaredLogger) error {
+func createObject(objectPath string, objectContent []byte, sugar *zap.SugaredLogger) error {
 	createdFile, err := os.Create(objectPath)
 	if err != nil {
 		return fmt.Errorf("create file: %w", err)
 	}
-	defer closeAndLogError(createdFile, objectPath, sugar)
+	defer CloseAndLogError(createdFile, objectPath, sugar)
 
-	if _, err := io.Copy(createdFile, file); err != nil {
+	if _, err := createdFile.Write(objectContent); err != nil {
 		return fmt.Errorf("write content to file: %w", err)
 	}
 
