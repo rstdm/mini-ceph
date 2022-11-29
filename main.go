@@ -24,8 +24,9 @@ func main() {
 	}
 	defer loggerCleanup()
 
-	truncatedFlagValues := flagValues              // create a copy
-	truncatedFlagValues.BearerToken = "<redacted>" // the token must not be logged
+	truncatedFlagValues := flagValues                  // create a copy
+	truncatedFlagValues.UserBearerToken = "<redacted>" // the token must not be logged
+	truncatedFlagValues.ClusterBearerToken = "<redacted>"
 	log.Infow("Logging server configuration", "flagValues", truncatedFlagValues)
 
 	serv, err := server.New(flagValues, log)

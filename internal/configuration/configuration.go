@@ -20,7 +20,8 @@ const (
 type Configuration struct {
 	UseProductionLogger bool
 	Port                int
-	BearerToken         string
+	UserBearerToken     string
+	ClusterBearerToken  string
 	MaxObjectSizeBytes  int64
 
 	ObjectFolder    string
@@ -41,8 +42,10 @@ func Parse() (Configuration, error) {
 	flag.BoolVar(&values.UseProductionLogger, "useProductionLogger", false, "Determines weather the logger "+
 		"should produce json output or human readable output")
 	flag.IntVar(&values.Port, "port", 5000, "Port on which to serve http requests.")
-	flag.StringVar(&values.BearerToken, "bearerToken", "", "BearerToken that is used to authorize all "+
-		"requests. Every request will be accepted without authorization if the token is empty.")
+	flag.StringVar(&values.UserBearerToken, "userBearerToken", "", "this token is used to authorize all "+
+		" user requests. Every request will be accepted without authorization if the token is empty.")
+	flag.StringVar(&values.ClusterBearerToken, "clusterBearerToken", "", "this token is used internally "+
+		"by all OSDs to authenticate each other. If no value is specified the userBearerToken will be used.")
 	flag.Int64Var(&values.MaxObjectSizeBytes, "maxObjectSizeBytes", 20000000, "Objects that are bigger than "+
 		"the specified size can not be persisted. Note that this doesn't influence already created objects which will "+
 		"still be available for download.")
@@ -63,6 +66,10 @@ func Parse() (Configuration, error) {
 		"0: {\"0\": [1, 2]}")
 
 	flag.Parse()
+
+	if values.ClusterBearerToken == "" {
+		values.ClusterBearerToken = values.UserBearerToken
+	}
 
 	values.ObjectFolder = filepath.Join(dataFolder, relativeObjectStoragePath)
 	persistedConfigurationPath := filepath.Join(dataFolder, relativePersistedConfigurationPath)

@@ -65,7 +65,7 @@ func New(flagValues configuration.Configuration, sugar *zap.SugaredLogger) (*Ser
 		return nil, fmt.Errorf("set trusted proxies to nil: %w", err)
 	}
 
-	middlewares := buildMiddlewares(flagValues.BearerToken, flagValues.UseProductionLogger, sugar)
+	middlewares := buildMiddlewares(flagValues.UserBearerToken, flagValues.UseProductionLogger, sugar)
 	router.Use(middlewares...)
 
 	a, err := api.NewAPI(flagValues.ObjectFolder, flagValues.MaxObjectSizeBytes, sugar)
