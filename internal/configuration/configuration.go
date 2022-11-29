@@ -26,14 +26,14 @@ type Configuration struct {
 
 	ObjectFolder    string
 	NodeID          int
-	NodeHosts       map[int]string
-	PlacementGroups map[int][]int
+	NodeHosts       []string
+	PlacementGroups [][]int
 }
 
 type persistedConfiguration struct {
 	NodeID          int
-	NodeHosts       map[int]string
-	PlacementGroups map[int][]int
+	NodeHosts       []string
+	PlacementGroups [][]int
 }
 
 func Parse() (Configuration, error) {
@@ -59,11 +59,13 @@ func Parse() (Configuration, error) {
 	flag.StringVar(&dataFolder, "dataFolder", ".", "Relative path to the folder that is "+
 		"used to store information.")
 	flag.StringVar(&rawNodeID, "nodeID", "", "non-negative integer which specifies the ID of the current node")
-	flag.StringVar(&rawNodes, "nodes", "", "json encoded key value map which maps the ID of each node "+
-		"to a host. The host must include the schema. Example: {\"0\": \"http://localhost:5000\"}")
-	flag.StringVar(&rawPlacementGroups, "placementGroups", "", "json encoded map of placement groups "+
-		"(keys) and the node IDs of that particular placement group. Example which maps node 1 and 2 to placement group "+
-		"0: {\"0\": [1, 2]}")
+	flag.StringVar(&rawNodes, "nodes", "", "json encoded list of hosts for each node. The position in "+
+		"the list is equal to the nodeID of the node. The host must include the schema. "+
+		"Example: [\"http://localhost:5000\", \"http://localhost:5001\"] -> The host of node 1 is localhost:5001")
+	flag.StringVar(&rawPlacementGroups, "placementGroups", "", "json encoded list of placement groups. "+
+		"Each placement group contains the IDs of the nodes which belong to this placement group. "+
+		"Example which maps node 1 and 2 to placement group 0 and node 3 and 4 to placement group 1:"+
+		"[[1, 2], [3, 4]]")
 
 	flag.Parse()
 
@@ -168,22 +170,18 @@ func persistConfiguration(pc persistedConfiguration, persistedConfigurationPath 
 	return nil
 }
 
-func parseNodes(rawNodes string) (map[int]string, error) {
+func parseNodes(rawNodes string) ([]string, error) {
 	if rawNodes == "" {
 		err := errors.New("nodes must not be empty")
 		return nil, err
 	}
 
-	var parsedNodes map[int]string
+	var parsedNodes []string
 	if err := json.Unmarshal([]byte(rawNodes), &parsedNodes); err != nil {
 		return nil, fmt.Errorf("parse json '%v': %w", rawNodes, err)
 	}
 
 	for currentNodeID, currentNodeHost := range parsedNodes {
-		if currentNodeID < 0 {
-			return nil, fmt.Errorf("all node ids must be non negative integere values")
-		}
-
 		currentURL, err := url.ParseRequestURI(currentNodeHost)
 		if err != nil {
 			return nil, fmt.Errorf("parse URL %v of node %v: %w", currentNodeHost, currentNodeID, err)
@@ -200,7 +198,7 @@ func parseNodes(rawNodes string) (map[int]string, error) {
 	return parsedNodes, nil
 }
 
-func parseNodeID(err error, rawNodeID string, nodes map[int]string) (int, error) {
+func parseNodeID(err error, rawNodeID string, nodes []string) (int, error) {
 	if rawNodeID == "" {
 		err = errors.New("nodeID must not be empty")
 		return 0, err
@@ -214,20 +212,21 @@ func parseNodeID(err error, rawNodeID string, nodes map[int]string) (int, error)
 		return 0, fmt.Errorf("NodeID %v must be >= 0", nodeID)
 	}
 
-	if _, ok := nodes[nodeID]; !ok {
-		return 0, fmt.Errorf("node %v is does not exist in the list of node network adresses", nodeID)
+	if nodeID >= len(nodes) {
+		err = fmt.Errorf("node %v has no associated host because the length of the host slice is %v", nodeID, len(nodes))
+		return 0, err
 	}
 
 	return nodeID, nil
 }
 
-func parsePlacementGroups(rawPlacementGroups string, nodes map[int]string) (map[int][]int, error) {
+func parsePlacementGroups(rawPlacementGroups string, nodes []string) ([][]int, error) {
 	if rawPlacementGroups == "" {
 		err := errors.New("placementGroups must not be empty")
 		return nil, err
 	}
 
-	var parsedPlacementGroups map[int][]int
+	var parsedPlacementGroups [][]int
 	if err := json.Unmarshal([]byte(rawPlacementGroups), &parsedPlacementGroups); err != nil {
 		err = fmt.Errorf("parse json string %v: %w", rawPlacementGroups, err)
 		return nil, err
@@ -235,7 +234,7 @@ func parsePlacementGroups(rawPlacementGroups string, nodes map[int]string) (map[
 
 	for placementGroup, nodesOfPG := range parsedPlacementGroups {
 		for _, nodeOfPG := range nodesOfPG {
-			if _, ok := nodes[nodeOfPG]; !ok {
+			if nodeOfPG >= len(nodes) {
 				err := fmt.Errorf("node %v in placement group %v is not mentioned in the list of node "+
 					"network adresses", nodeOfPG, placementGroup)
 				return nil, err
