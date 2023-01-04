@@ -7,6 +7,7 @@ import (
 	"github.com/rstdm/glados/internal/api/object/file"
 	"github.com/rstdm/glados/internal/api/object/operationstate"
 	"github.com/rstdm/glados/internal/api/object/replication"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"io"
 	"mime/multipart"
@@ -221,13 +222,19 @@ func (h *Handler) PersistObject(objectHash string, formFile *multipart.FileHeade
 
 	if dist.IsPrimary {
 		if err := h.replicationHandler.Replicate(objectHash, objectContent, dist.SlaveHosts); err != nil {
+			// we don't have to delete the objects because Replicate() deletes all already created objects if it
+			// encounters an error.
 			return fmt.Errorf("replicate object to slaves: %w", err)
 		}
 	}
 
 	if err := h.fileHandler.PersistObject(objectHash, objectContent); err != nil {
-		return fmt.Errorf("persist object locally: %w", err)
-
+		merr := fmt.Errorf("persist object locally: %w", err)
+		if err = h.replicationHandler.Delete(objectHash, dist.SlaveHosts); err != nil {
+			err = fmt.Errorf("delete replicated object because object could not be persisted locally: %w", err)
+			merr = multierr.Append(merr, err)
+		}
+		return merr
 	}
 
 	return nil
