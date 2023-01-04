@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+const int MAXP = 2; // maximale Anzahl von Prozessen
+
+typedef int[0,MAXP-1] t_pid; // Typdeklaration, deklariert einen Typ t_pid, der Zahlen von 0 bis MAXP-1 annehmen kann
+
+bool fs_fileExists = false;
+bool fs_checkInProgress = false;
+broadcast chan fs_chan;
+
+
+int mu_wantRead = 0;
+int mu_read = 0;
+bool mu_wantWrite = false;
+bool mu_write = false;
+bool mu_wantDelete = false;
+bool mu_delete = false;
+bool mu_delayDelete = false; // signalisiert keinen Zustand! Bedeutet nur, dass das Objekt zum löschen vorgemerkt ist.
+
+bool objectExistsWithoutLookup(){
+    return mu_read &gt; 0 &amp;&amp; ! mu_delayDelete;
+}
+
+bool fileIsModified(){
+    return mu_write || mu_delete || mu_delayDelete;
+}
+
+bool needsFileExistence(){
+    return mu_wantWrite || mu_wantDelete || mu_wantRead &gt; 0;
+}</declaration>
+	<template>
+		<name>FSC</name>
+		<location id="id0" x="0" y="0">
+			<name x="-10" y="-34">initial</name>
+		</location>
+		<location id="id1" x="136" y="0">
+			<name x="126" y="-34">checkFS</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="34" y="-76">fs_chan!</label>
+			<label kind="assignment" x="-17" y="-51">fs_checkInProgress=false</label>
+			<nail x="68" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-42" y="34">needsFileExistence() &amp;&amp; ! fileIsModified()</label>
+			<label kind="assignment" x="-8" y="51">fs_checkInProgress=true</label>
+			<nail x="68" y="34"/>
+		</transition>
+	</template>
+	<template>
+		<name x="9" y="9">Node</name>
+		<parameter>t_pid pid</parameter>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id2" x="-408" y="-204">
+			<name x="-476" y="-221">initial</name>
+		</location>
+		<location id="id3" x="68" y="-204">
+			<name x="77" y="-238">read</name>
+		</location>
+		<location id="id4" x="-748" y="-204">
+			<name x="-765" y="-187">write</name>
+		</location>
+		<location id="id5" x="68" y="68">
+		</location>
+		<location id="id6" x="68" y="-476">
+			<name x="34" y="-510">delayedDelete</name>
+		</location>
+		<location id="id7" x="-748" y="-408">
+			<name x="-833" y="-425">wantWrite</name>
+		</location>
+		<location id="id8" x="-748" y="68">
+			<name x="-807" y="85">wantDelete</name>
+		</location>
+		<location id="id9" x="-170" y="0">
+			<name x="-187" y="17">delete</name>
+		</location>
+		<location id="id10" x="-238" y="-204">
+			<name x="-272" y="-195">wantRead</name>
+		</location>
+		<init ref="id2"/>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-612" y="144">!fileIsModified() &amp;&amp; mu_read &gt; 0 &amp;&amp; !fs_checkInProgress</label>
+			<label kind="assignment" x="-603" y="170">mu_wantDelete = false,
+mu_delete = true</label>
+			<nail x="-646" y="170"/>
+			<nail x="-34" y="170"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-637" y="-93">!fs_fileExists</label>
+			<label kind="synchronisation" x="-637" y="-76">fs_chan?</label>
+			<label kind="assignment" x="-637" y="-59">mu_wantDelete = false</label>
+			<nail x="-714" y="34"/>
+			<nail x="-714" y="-68"/>
+			<nail x="-442" y="-68"/>
+			<nail x="-408" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-730" y="-510">fs_fileExists</label>
+			<label kind="synchronisation" x="-730" y="-493">fs_chan?</label>
+			<label kind="assignment" x="-730" y="-476">mu_wantWrite=false</label>
+			<nail x="-748" y="-476"/>
+			<nail x="-442" y="-476"/>
+			<nail x="-408" y="-442"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-365" y="-425">fileIsModified()</label>
+			<label kind="assignment" x="-357" y="-408">mu_wantRead--</label>
+			<nail x="-238" y="-408"/>
+			<nail x="-374" y="-408"/>
+			<nail x="-408" y="-374"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-170" y="-348">objectExistsWithoutLookup() &amp;&amp; 
+!fileIsModified()</label>
+			<label kind="assignment" x="-170" y="-314">mu_read++,
+mu_wantRead--</label>
+			<nail x="-238" y="-238"/>
+			<nail x="-204" y="-272"/>
+			<nail x="34" y="-272"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-374" y="-331">!fs_fileExists</label>
+			<label kind="synchronisation" x="-374" y="-314">fs_chan?</label>
+			<label kind="assignment" x="-374" y="-297">mu_wantRead--</label>
+			<nail x="-238" y="-238"/>
+			<nail x="-280" y="-272"/>
+			<nail x="-374" y="-272"/>
+			<nail x="-408" y="-238"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id10"/>
+			<label kind="guard" x="-391" y="-229">!fileIsModified()</label>
+			<label kind="assignment" x="-391" y="-204">mu_wantRead++</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id9"/>
+			<label kind="guard" x="-93" y="8">mu_read == 0</label>
+			<nail x="68" y="34"/>
+			<nail x="34" y="0"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-612" y="0">fileIsModified()</label>
+			<label kind="assignment" x="-629" y="17">mu_wantDelete = false</label>
+			<nail x="-714" y="34"/>
+			<nail x="-680" y="0"/>
+			<nail x="-442" y="0"/>
+			<nail x="-408" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-748" y="-136">!fileIsModified() &amp;&amp; !mu_wantDelete &amp;&amp; !mu_delayDelete</label>
+			<label kind="assignment" x="-748" y="-119">mu_wantDelete = true</label>
+			<nail x="-476" y="-136"/>
+			<nail x="-748" y="-136"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-731" y="-442">fileIsModified() || objectExistsWithoutLookup()</label>
+			<label kind="assignment" x="-663" y="-425">mu_wantWrite = false</label>
+			<nail x="-442" y="-408"/>
+			<nail x="-408" y="-374"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-697" y="-348">!fileIsModified() &amp;&amp; !mu_wantWrite &amp;&amp;
+!objectExistsWithoutLookup()</label>
+			<label kind="assignment" x="-697" y="-314">mu_wantWrite=true</label>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-102" y="-85">mu_read &gt; 0</label>
+			<label kind="assignment" x="-102" y="-68">mu_delete = false,
+mu_delayDelete=true</label>
+			<nail x="68" y="-68"/>
+			<nail x="-374" y="-68"/>
+			<nail x="-408" y="-102"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id2"/>
+			<label kind="assignment" x="-170" y="-518">fs_fileExists=false,
+mu_delayDelete=false</label>
+			<nail x="-374" y="-476"/>
+			<nail x="-408" y="-442"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id6"/>
+			<label kind="guard" x="77" y="-450">mu_read == 1 &amp;&amp; mu_delayDelete</label>
+			<label kind="assignment" x="77" y="-433">mu_read--</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id2"/>
+			<label kind="assignment" x="-331" y="0">fs_fileExists=false,
+mu_delete=false</label>
+			<nail x="-374" y="0"/>
+			<nail x="-408" y="-34"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id2"/>
+			<label kind="assignment" x="-697" y="-204">fs_fileExists=true,
+mu_write=false</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-348" y="-161">mu_read &gt; 1 || !mu_delayDelete</label>
+			<label kind="assignment" x="-289" y="-136">mu_read--</label>
+			<nail x="68" y="-136"/>
+			<nail x="-374" y="-136"/>
+			<nail x="-408" y="-170"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-501" y="68">!fileIsModified() &amp;&amp; fs_fileExists</label>
+			<label kind="synchronisation" x="-441" y="51">fs_chan?</label>
+			<label kind="assignment" x="-501" y="85">mu_delete=true,
+mu_wantDelete = false</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-960" y="-323">!fileIsModified() &amp;&amp; !fs_fileExists</label>
+			<label kind="synchronisation" x="-952" y="-340">fs_chan?</label>
+			<label kind="assignment" x="-960" y="-306">mu_write=true,
+mu_wantWrite = false</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-187" y="-238">fs_fileExists &amp;&amp; !fileIsModified()</label>
+			<label kind="synchronisation" x="-119" y="-221">fs_chan?</label>
+			<label kind="assignment" x="-136" y="-204">mu_read++,
+mu_wantRead--</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+//Process = Template();
+// List one or more processes to be composed into a system.
+system Node, FSC;
+    </system>
+	<queries>
+		<query>
+			<formula>A[] (forall (id: t_pid) Node(id).read imply fs_fileExists)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (forall (id: t_pid) Node(id).write imply !fs_fileExists)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (forall (id: t_pid) Node(id).delete imply fs_fileExists)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (forall (id: t_pid) Node(id).delayedDelete imply fs_fileExists)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] ((sum (id: t_pid) Node(id).read) == mu_read)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] ((sum (id: t_pid) Node(id).wantRead) == mu_wantRead)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] ((sum (id: t_pid) (Node(id).write || Node(id).delete || Node(id).delayedDelete)) &lt;= 1)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] ((exists (id: t_pid) Node(id).read) imply (forall (id: t_pid) (!Node(id).write &amp;&amp; !Node(id).delete &amp;&amp; !Node(id).delayedDelete)))</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; ((exists (id: t_pid) Node(id).wantDelete) &amp;&amp; (exists (id: t_pid) Node(id).read))</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (!((exists (id: t_pid) (Node(id).write || Node(id).delete || Node(id).delayedDelete)) &amp;&amp; FSC.checkFS))</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] (FSC.checkFS == fs_checkInProgress)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
