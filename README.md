@@ -1,4 +1,4 @@
-# Mini-Ceph
+﻿# Mini-Ceph
 
 Mini-Ceph ist ein in Go geschriebener Prototyp, der die wichtigsten Eigenschaften des verteilten Object Storages Rados nachimplementiert. Rados ist die Kernkomponente von Ceph, die direkt für die Object-Storage-Funktionalität verwendet wird. „Höhere” Ceph-Features wie z.B. Blockstorage werden intern mit Rados realisiert. Ich habe den Prototypen dennoch aufgrund der größeren Bekanntheit des Namens Mini-Ceph genannt.
 
@@ -16,11 +16,11 @@ Aufgrund des prototypischen Charakters der Implementierung können nicht alle Fe
 
 - Alle Objekte sind immutable und können nach dem anlegen nicht mehr modifiziert werden. Diese künstliche Beschränkung vereinfacht den wechselweisen Ausschluss und die Replikation immens.
 
-- Die „Rollenverteilung” aller Knoten im Storage-Cluster wird beim Start fest vorgegeben und kann nachträglich nicht mehr geändert werden. Der Cluster ist außerstande, flexibel auf den Ausfall (oder das Hinzufügen) von Servern zu reagieren. Wenn ein Server ausfällt können daher keine Operationen für Objekte mehr durchgeführt werden, die von diesem Server verwaltet werden.
-  Um dieses Problem zu überwinden ist es erforderlich, dass der Cluster als Ganzes sich über die (Nicht-) Verfügbarkeit einzelner Server bewusst ist und ggf. per Konsens eine neue Daten- und Rollenverteilung beschließt. Während die Daten zwischen den Servern transferiert werden und die Server ihre Rollen wechseln muss sichergestellt sein, dass diese Operationen für Clients transparent ablaufen und laufende Operationen nicht beeinträchtigt werden. Beides ist außerordentlich schwierig umzusetzen.
+- Die „Rollenverteilung” aller Knoten im Storage-Cluster wird beim Start fest vorgegeben und kann nachträglich nicht mehr geändert werden. Der Cluster ist außerstande, flexibel auf den Ausfall (oder das Hinzufügen) von Servern zu reagieren. Wenn ein Server ausfällt, können daher keine Operationen für Objekte mehr durchgeführt werden, die von diesem Server verwaltet werden.
+  Um dieses Problem zu überwinden, ist es erforderlich, dass der Cluster als Ganzes sich über die (Nicht-) Verfügbarkeit einzelner Server bewusst ist und ggf. per Konsens eine neue Daten- und Rollenverteilung beschließt. Während die Daten zwischen den Servern transferiert werden und die Server ihre Rollen wechseln muss sichergestellt sein, dass diese Operationen für Clients transparent ablaufen und laufende Operationen nicht beeinträchtigt werden. Beides ist außerordentlich schwierig umzusetzen.
 
 - Rados basiert auf dem Kerngedanken, dass jeder Server zu jedem Zeitpunkt über den Crush-Algorithmus [^3] errechnen kann, auf welchen Servern ein Objekt abgelegt werden soll. Auf diese Weise ist keine zentrale Datenbank erforderlich, die zu einem Flaschenhals werden könnte.
-  Der Crush-Algorithmus ist schwierig zu implementieren, stellt aber sicher, dass Objekte beim Hinzufügen und Entfernen von Servern nicht unnötig verschoben werden. Für den Prototypen wurde stattdessen ein primitiver eigener Algorithmus verwendet, der wie Crush alle Objekte gleichmäßig auf alle Server verteilt. Der eigene Algorithmus würde jedoch alle im Cluster gespeicherten Objekte beim Hinzufügen / Entfernen eines Servers grundlos verschieben und ist damit nicht praxistauglich. Dies ist jedoch für den Prototypen unerheblich, weil das dynamische verschieben von Daten nicht implementiert wurde (siehe vorheriger Punkt).
+  Der Crush-Algorithmus ist schwierig zu implementieren, stellt aber sicher, dass Objekte beim Hinzufügen und Entfernen von Servern nicht unnötig verschoben werden. Für den Prototypen wurde stattdessen ein primitiver eigener Algorithmus verwendet, der wie Crush alle Objekte gleichmäßig auf alle Server verteilt. Der eigene Algorithmus würde jedoch alle im Cluster gespeicherten Objekte beim Hinzufügen / Entfernen eines Servers grundlos verschieben und ist damit nicht praxistauglich. Dies ist jedoch für den Prototypen unerheblich, weil das dynamische Verschieben von Daten nicht implementiert wurde (siehe vorheriger Punkt).
 
 ## Verwendung
 
@@ -36,9 +36,9 @@ Beispiel:
 glados-windows.exe --dataFolder instanz0 --port 5000 --nodes "[\"http://localhost:5000\",\"http://localhost:5001\"]" --nodeID 0 --placementGroups "[[0, 1],[1,0]]"
 ```
 
-Die so erstellte Instanz legt ihre Daten im Ordner `instanz0` ab und ist auf Port `5000` erreichbar. Der Ordner `instanz0` muss zuvor manuell erstellt worden sein. Mit `--nodes` wird angegeben, unter welchen Adressen alle Knoten des Clusters erreicht werden können. Die Liste ist geordnet: Die Adresse von Instanz 0 kommt an erster Stelle, gefolgt von der Adresse von Instanz 1, etc. `--nodeID` gibt die ID des gerade erstellten Knoten im Cluster vor.
+Die so erstellte Instanz legt ihre Daten im Ordner `instanz0` ab und ist auf Port `5000` erreichbar. Der Ordner `instanz0` muss zuvor manuell erstellt worden sein. Mit `--nodes` wird angegeben, unter welchen Adressen alle Knoten des Clusters erreicht werden können. Die Liste ist geordnet: Die Adresse von Instanz 0 kommt an erster Stelle, gefolgt von der Adresse von Instanz 1, etc. `--nodeID` gibt die ID des gerade erstellten Knotens im Cluster vor.
 
-`--placementGroups` enthält eine Liste von Placement Groups, die wiederum aus einer geordneten Liste von Node-IDs bestehen. Der erste Knoten in einer Placement Group ist der Primary, der Lese- und Schreibanfragen entgegen nimmt und alle Daten auf die übrigen Knoten in der Placement Group repliziert. Das Beispiel  `--placementGroups '[[0, 1],[1,0]]'` erstellt zwei Placement Groups: In der ersten Placement Group ist Knoten 0 der Primary und repliziert alle Daten auf Knoten 1. In der zweiten Placement Group ist Knoten 1 der Primary und repliziert alle Daten auf Knoten 0. Alle Daten werden gleichmäßig zwischen den beiden Placement Groups aufgeteilt.
+`--placementGroups` enthält eine Liste von Placement Groups, die wiederum aus einer geordneten Liste von Node-IDs bestehen. Der erste Knoten in einer Placement Group ist der Primary, der Lese- und Schreibanfragen entgegen nimmt und alle Daten auf die übrigen Knoten in der Placement Group repliziert. Das Beispiel `--placementGroups '[[0, 1],[1,0]]'` erstellt zwei Placement Groups: In der ersten Placement Group ist Knoten 0 der Primary und repliziert alle Daten auf Knoten 1. In der zweiten Placement Group ist Knoten 1 der Primary und repliziert alle Daten auf Knoten 0. Alle Daten werden gleichmäßig zwischen den beiden Placement Groups aufgeteilt.
 
 Für eine lauffähige Demonstration muss noch Knoten 1 gestartet werden. Hierfür muss der `--dataFolder`, der `--port` und die `--nodeID` angepasst werden. Es ist wichtig, dass `--nodes` und `--placementGroups` für alle Knoten im Cluster gleich ist.
 
@@ -48,9 +48,9 @@ glados-windows.exe --dataFolder instanz1 --port 5001 --nodes "[\"http://localhos
 
 Damit ist der Cluster fertig eingerichtet und die REST-API kann verwendet werden. Für das nachfolgende Beispiel wird die Textdatei `hello-world.txt` verwendet, da `curl` den Inhalt von Textdateien auf der Konsole ausgeben kann. Mini-Ceph kann jedoch beliebige Binärdateien speichern.
 
-Ein Objekt wird in Mini-Ceph über einen SHA256-Hash adressiert. Der Client wählt einen Objektnamen z.B. `objekt-1` und hashed ihn. Aus `objekt-1` wird folglich `5097d5463cc960896689b2d3d4d0041b8ce454e437352578e7d2e869e2739d10`. Ausgehend von diesem Hash kann der Client berechnen, in welcher Placement Group das Objekt abgelegt werden soll und kontaktiert den Primary der entsprechenden Placement Group. Alle anderen Knoten des Clusters werden alle Anfragen für dieses Objekt ablehnen.
+Ein Objekt wird in Mini-Ceph über einen SHA256-Hash adressiert. Der Client wählt einen Objektnamen z.B. `objekt-1` und hashed ihn. Aus `objekt-1` wird folglich `5097d5463cc960896689b2d3d4d0041b8ce454e437352578e7d2e869e2739d10`. Ausgehend von diesem Hash kann der Client berechnen, in welcher Placement Group das Objekt abgelegt werden soll, und kontaktiert den Primary der entsprechenden Placement Group. Alle anderen Knoten des Clusters werden alle Anfragen für dieses Objekt ablehnen.
 
-Momentan existiert keine einfach zu benutzende Client-Library, weswegen hier `curl` verwendet wird. Die Berechnung des Hashes und die Wahl des zuständigen Knotens muss folglich manuell durchgeführt werden.
+Momentan existiert keine einfach zu benutzende Client-Library, weswegen hier `curl` verwendet wird. Die Berechnung des Hashes und die Wahl des zuständigen Knotens müssen folglich manuell durchgeführt werden.
 
 ```
 # Das Objekt objekt-1 auf Knoten 0 in Placement Group 0 speichern.
