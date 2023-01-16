@@ -12,7 +12,7 @@ import (
 func (a *API) getObject(c *gin.Context) {
 	objectHash := middleware.GetObjectHash(c)
 
-	err := a.objectHandler.TransferObject(objectHash, a.transferObjectCallback(c))
+	err := a.objectHandler.Read(objectHash, a.transferObjectCallback(c))
 	if err == nil {
 		// we don't have to do anything; the callback already completed the request
 		return

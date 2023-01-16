@@ -27,14 +27,14 @@ func (a *API) putObject(c *gin.Context) {
 
 	objectHash := middleware.GetObjectHash(c)
 
-	err = a.objectHandler.PersistObject(objectHash, formFile)
+	err = a.objectHandler.Write(objectHash, formFile)
 	if err == nil {
 		c.String(http.StatusOK, "object persisted")
 		return
 	}
 
 	// there was an error
-	if errors.Is(err, object.ErrObjectAlreadyExists) {
+	if errors.Is(err, object.ErrObjectDoesExist) {
 		c.String(http.StatusConflict, "The requested object already exists.")
 	} else {
 		err = fmt.Errorf("persist object: %w", err)
