@@ -113,25 +113,19 @@ func (h *Handler) GetObjectPath(objectHash string) (string, error) {
 	}
 }
 
-func (h *Handler) DeleteObject(objectHash string) (didExist bool, err error) {
+func (h *Handler) DeleteObject(objectHash string) error {
 	objectPath, err := getObjectPath(objectHash, h.objectFolder)
 	if err != nil {
-		return false, fmt.Errorf("get object path: %w", err)
+		return fmt.Errorf("get object path: %w", err)
 	}
 
 	err = os.Remove(objectPath)
-	if err == nil {
-		return true, nil
+	if err != nil {
+		err = fmt.Errorf("remove object: %w", err)
+		return err
 	}
 
-	// there was an error
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-
-	// err is an unexpected error
-	err = fmt.Errorf("remove object: %w", err)
-	return false, err
+	return nil
 }
 
 func (h *Handler) RemovePersistedFlag(objectHash string) error {
