@@ -15,12 +15,20 @@ Mini-Ceph weist die wichtigsten Eigenschaften von Rados auf:
 Aufgrund des prototypischen Charakters der Implementierung können nicht alle Features von Rados implementiert werden. Zu den wichtigsten fehlenden Aspekten gehören:
 
 - Alle Objekte sind immutable und können nach dem anlegen nicht mehr modifiziert werden. Diese künstliche Beschränkung vereinfacht den wechselweisen Ausschluss und die Replikation immens.
-
 - Die „Rollenverteilung” aller Knoten im Storage-Cluster wird beim Start fest vorgegeben und kann nachträglich nicht mehr geändert werden. Der Cluster ist außerstande, flexibel auf den Ausfall (oder das Hinzufügen) von Servern zu reagieren. Wenn ein Server ausfällt, können daher keine Operationen für Objekte mehr durchgeführt werden, die von diesem Server verwaltet werden.
   Um dieses Problem zu überwinden, ist es erforderlich, dass der Cluster als Ganzes sich über die (Nicht-) Verfügbarkeit einzelner Server bewusst ist und ggf. per Konsens eine neue Daten- und Rollenverteilung beschließt. Während die Daten zwischen den Servern transferiert werden und die Server ihre Rollen wechseln muss sichergestellt sein, dass diese Operationen für Clients transparent ablaufen und laufende Operationen nicht beeinträchtigt werden. Beides ist außerordentlich schwierig umzusetzen.
-
 - Rados basiert auf dem Kerngedanken, dass jeder Server zu jedem Zeitpunkt über den Crush-Algorithmus [^3] errechnen kann, auf welchen Servern ein Objekt abgelegt werden soll. Auf diese Weise ist keine zentrale Datenbank erforderlich, die zu einem Flaschenhals werden könnte.
   Der Crush-Algorithmus ist schwierig zu implementieren, stellt aber sicher, dass Objekte beim Hinzufügen und Entfernen von Servern nicht unnötig verschoben werden. Für den Prototypen wurde stattdessen ein primitiver eigener Algorithmus verwendet, der wie Crush alle Objekte gleichmäßig auf alle Server verteilt. Der eigene Algorithmus würde jedoch alle im Cluster gespeicherten Objekte beim Hinzufügen / Entfernen eines Servers grundlos verschieben und ist damit nicht praxistauglich. Dies ist jedoch für den Prototypen unerheblich, weil das dynamische Verschieben von Daten nicht implementiert wurde (siehe vorheriger Punkt).
+
+## Projektorganisation
+
+`main.go` beinhaltet nur grundlegende Initialisierungslogik. Die eigentliche Anwendungslogik ist im `internal` package hinterlegt.
+
+Das `configuration` package enthält Code zum Parsen und Validieren von CLI-Parametern. `logger` und `server` erstellen und konfigurieren jeweils einen Logger bzw. einen HTTP-Server.
+
+Das `api` package enthält die vom HTTP-Server verwendeten APIs und die zugehörige Anwendungslogikt. `api/middleware` enthält Vorabprüfungen, die sicherstellen, dass nur berechtigte Anfragen verarbeitet werden (Prüfung von Authentication Token, Prüfung ob der Server für ein Objekt zuständig ist).
+
+Das `object` package enthält die Kernlogik des Objekt Storages. `distribution` bestimmt, auf welchen Knoten ein Objekt abgelegt werden soll. `file` enthält alle Operationen zum schreiben, lesen und löschen von Objekten auf der Festplatte. `hash` parsed und validiert die Hashes, die als eindeutige Objekt-ID fungieren. `replication` übernimmt die Replizierung von Objekten auf andere Knoten.
 
 ## Verwendung
 
