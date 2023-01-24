@@ -9,12 +9,12 @@ Mini-Ceph weist die wichtigsten Eigenschaften von Rados auf:
 - Daten und damit verbundene Lese- und Schreibanfragen werden gleichmäßig auf alle Server verteilt.
 - Es handelt sich um ein dezentrales Peer-to-Peer-Netzwerk.
 - Create-, Read- und Delete-Operationen werden für Objekte unterstützt.
-- Alle Daten sind aus Sicht der Clients zu jedem Zeitpunkt konsistent. Race Conditions sind ausgeschlossen und der wechselseitige Ausschluss im Konflikt stehender Aktionen (z.B. zwei gleichzeitige Create-Operationen auf dem selben Objekt) ist sichergestellt.
+- Alle Daten sind aus Sicht der Clients zu jedem Zeitpunkt konsistent. Race Conditions sind ausgeschlossen und der wechselseitige Ausschluss im Konflikt stehender Aktionen (z.B. zwei gleichzeitige Create-Operationen auf demselben Objekt) ist sichergestellt.
 -  Alle Daten werden zur Steigerung der Verfügbarkeit redundant auf mehreren Servern abgelegt.
 
 Aufgrund des prototypischen Charakters der Implementierung können nicht alle Features von Rados implementiert werden. Zu den wichtigsten fehlenden Aspekten gehören:
 
-- Alle Objekte sind immutable und können nach dem anlegen nicht mehr modifiziert werden. Diese künstliche Beschränkung vereinfacht den wechselweisen Ausschluss und die Replikation immens.
+- Alle Objekte sind immutable und können nach dem Anlegen nicht mehr modifiziert werden. Diese künstliche Beschränkung vereinfacht den wechselweisen Ausschluss und die Replikation immens.
 - Die „Rollenverteilung” aller Knoten im Storage-Cluster wird beim Start fest vorgegeben und kann nachträglich nicht mehr geändert werden. Der Cluster ist außerstande, flexibel auf den Ausfall (oder das Hinzufügen) von Servern zu reagieren. Wenn ein Server ausfällt, können daher keine Operationen für Objekte mehr durchgeführt werden, die von diesem Server verwaltet werden.
   Um dieses Problem zu überwinden, ist es erforderlich, dass der Cluster als Ganzes sich über die (Nicht-) Verfügbarkeit einzelner Server bewusst ist und ggf. per Konsens eine neue Daten- und Rollenverteilung beschließt. Während die Daten zwischen den Servern transferiert werden und die Server ihre Rollen wechseln muss sichergestellt sein, dass diese Operationen für Clients transparent ablaufen und laufende Operationen nicht beeinträchtigt werden. Beides ist außerordentlich schwierig umzusetzen.
 - Rados basiert auf dem Kerngedanken, dass jeder Server zu jedem Zeitpunkt über den Crush-Algorithmus [^3] errechnen kann, auf welchen Servern ein Objekt abgelegt werden soll. Auf diese Weise ist keine zentrale Datenbank erforderlich, die zu einem Flaschenhals werden könnte.
@@ -26,9 +26,9 @@ Aufgrund des prototypischen Charakters der Implementierung können nicht alle Fe
 
 Das `configuration` package enthält Code zum Parsen und Validieren von CLI-Parametern. `logger` und `server` erstellen und konfigurieren jeweils einen Logger bzw. einen HTTP-Server.
 
-Das `api` package enthält die vom HTTP-Server verwendeten APIs und die zugehörige Anwendungslogikt. `api/middleware` enthält Vorabprüfungen, die sicherstellen, dass nur berechtigte Anfragen verarbeitet werden (Prüfung von Authentication Token, Prüfung ob der Server für ein Objekt zuständig ist).
+Das `api` package enthält die vom HTTP-Server verwendeten APIs und die zugehörige Anwendungslogik. `api/middleware` enthält Vorabprüfungen, die sicherstellen, dass nur berechtigte Anfragen verarbeitet werden (Prüfung von Authentication Token, Prüfung ob der Server für ein Objekt zuständig ist).
 
-Das `object` package enthält die Kernlogik des Objekt Storages. `distribution` bestimmt, auf welchen Knoten ein Objekt abgelegt werden soll. `file` enthält alle Operationen zum schreiben, lesen und löschen von Objekten auf der Festplatte. `hash` parsed und validiert die Hashes, die als eindeutige Objekt-ID fungieren. `replication` übernimmt die Replizierung von Objekten auf andere Knoten.
+Das `object` package enthält die Kernlogik des Objekt Storages. `distribution` bestimmt, auf welchen Knoten ein Objekt abgelegt werden soll. `file` enthält alle Operationen zum Schreiben, Lesen und Löschen von Objekten auf der Festplatte. `hash` parsed und validiert die Hashes, die als eindeutige Objekt-ID fungieren. `replication` übernimmt die Replizierung von Objekten auf andere Knoten.
 
 ## Verwendung
 
@@ -46,7 +46,7 @@ glados-windows.exe --dataFolder instanz0 --port 5000 --nodes "[\"http://localhos
 
 Die so erstellte Instanz legt ihre Daten im Ordner `instanz0` ab und ist auf Port `5000` erreichbar. Der Ordner `instanz0` muss zuvor manuell erstellt worden sein. Mit `--nodes` wird angegeben, unter welchen Adressen alle Knoten des Clusters erreicht werden können. Die Liste ist geordnet: Die Adresse von Instanz 0 kommt an erster Stelle, gefolgt von der Adresse von Instanz 1, etc. `--nodeID` gibt die ID des gerade erstellten Knotens im Cluster vor.
 
-`--placementGroups` enthält eine Liste von Placement Groups, die wiederum aus einer geordneten Liste von Node-IDs bestehen. Der erste Knoten in einer Placement Group ist der Primary, der Lese- und Schreibanfragen entgegen nimmt und alle Daten auf die übrigen Knoten in der Placement Group repliziert. Das Beispiel `--placementGroups '[[0, 1],[1,0]]'` erstellt zwei Placement Groups: In der ersten Placement Group ist Knoten 0 der Primary und repliziert alle Daten auf Knoten 1. In der zweiten Placement Group ist Knoten 1 der Primary und repliziert alle Daten auf Knoten 0. Alle Daten werden gleichmäßig zwischen den beiden Placement Groups aufgeteilt.
+`--placementGroups` enthält eine Liste von Placement Groups, die wiederum aus einer geordneten Liste von Node-IDs bestehen. Der erste Knoten in einer Placement Group ist der Primary, der Lese- und Schreibanfragen entgegennimmt und alle Daten auf die übrigen Knoten in der Placement Group repliziert. Das Beispiel `--placementGroups '[[0, 1],[1,0]]'` erstellt zwei Placement Groups: In der ersten Placement Group ist Knoten 0 der Primary und repliziert alle Daten auf Knoten 1. In der zweiten Placement Group ist Knoten 1 der Primary und repliziert alle Daten auf Knoten 0. Alle Daten werden gleichmäßig zwischen den beiden Placement Groups aufgeteilt.
 
 Für eine lauffähige Demonstration muss noch Knoten 1 gestartet werden. Hierfür muss der `--dataFolder`, der `--port` und die `--nodeID` angepasst werden. Es ist wichtig, dass `--nodes` und `--placementGroups` für alle Knoten im Cluster gleich ist.
 
@@ -94,9 +94,9 @@ Wrong node. This request should be directed to the primary of placement group 1 
 
 ## Sicherstellung des wechselseitigen Ausschlusses
 
-Ceph / Rados ist eine verteilte Datenbank, was die Sicherstellung des wechselseitigen Ausschlusses erschwert. Es muss beispielsweise sichergestellt werden, dass keine zwei Clients das selbe Objekt zeitgleich erfolgreich auf zwei verschiedenen Knoten des Clusters anlegen.
+Ceph / Rados ist eine verteilte Datenbank, was die Sicherstellung des wechselseitigen Ausschlusses erschwert. Es muss beispielsweise sichergestellt werden, dass keine zwei Clients dasselbe Objekt zeitgleich erfolgreich auf zwei verschiedenen Knoten des Clusters anlegen.
 
-Ceph löst dieses Problem dadurch, dass kritische Operationen (z.B. Create-Operationen) nur durch den Primary der Placement Group durchgeführt werden, in der das Objekt abgelegt ist. Da jedes Objekt nur zu einer Placement Group gehört und jede Placement Group nur exakt einen Primary hat, werden alle (kritischen) Anfragen für ein Objekt von dem selben Server verarbeitet, der daher lokal den wechselseitigen Ausschluss sicherstellen kann.
+Ceph löst dieses Problem dadurch, dass kritische Operationen (z.B. Create-Operationen) nur durch den Primary der Placement Group durchgeführt werden, in der das Objekt abgelegt ist. Da jedes Objekt nur zu einer Placement Group gehört und jede Placement Group nur exakt einen Primary hat, werden alle (kritischen) Anfragen für ein Objekt von demselben Server verarbeitet, der daher lokal den wechselseitigen Ausschluss sicherstellen kann.
 
 Die Doktorarbeit von Sage Weil fokussiert sich leider auf „high-level”-Aspekte des Objekt Storages und lässt einige Detailfragen unbeantwortet. Dazu gehört auch, wie der wechselseitige Ausschluss lokal umgesetzt werden kann und soll. Ich habe daher meinen eigenen Algorithmus entwickelt, der folgenden Anforderungen genügt:
 
