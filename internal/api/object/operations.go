@@ -2,9 +2,9 @@ package object
 
 import (
 	"fmt"
-	"github.com/rstdm/glados/internal/api/object/distribution"
-	"github.com/rstdm/glados/internal/api/object/file"
-	"github.com/rstdm/glados/internal/api/object/replication"
+	"github.com/rstdm/mini-ceph/internal/api/object/distribution"
+	"github.com/rstdm/mini-ceph/internal/api/object/file"
+	"github.com/rstdm/mini-ceph/internal/api/object/replication"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"io"

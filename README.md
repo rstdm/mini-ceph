@@ -41,7 +41,7 @@ Jeder Instanz muss beim Start vorgegeben werden, in welchem Ordner sie ihre Date
 Beispiel:
 
 ```
-glados-windows.exe --dataFolder instanz0 --port 5000 --nodes "[\"http://localhost:5000\",\"http://localhost:5001\"]" --nodeID 0 --placementGroups "[[0, 1],[1,0]]"
+mini-ceph.exe --dataFolder instanz0 --port 5000 --nodes "[\"http://localhost:5000\",\"http://localhost:5001\"]" --nodeID 0 --placementGroups "[[0, 1],[1,0]]"
 ```
 
 Die so erstellte Instanz legt ihre Daten im Ordner `instanz0` ab und ist auf Port `5000` erreichbar. Der Ordner `instanz0` muss zuvor manuell erstellt worden sein. Mit `--nodes` wird angegeben, unter welchen Adressen alle Knoten des Clusters erreicht werden können. Die Liste ist geordnet: Die Adresse von Instanz 0 kommt an erster Stelle, gefolgt von der Adresse von Instanz 1, etc. `--nodeID` gibt die ID des gerade erstellten Knotens im Cluster vor.
@@ -51,7 +51,7 @@ Die so erstellte Instanz legt ihre Daten im Ordner `instanz0` ab und ist auf Por
 Für eine lauffähige Demonstration muss noch Knoten 1 gestartet werden. Hierfür muss der `--dataFolder`, der `--port` und die `--nodeID` angepasst werden. Es ist wichtig, dass `--nodes` und `--placementGroups` für alle Knoten im Cluster gleich ist.
 
 ```
-glados-windows.exe --dataFolder instanz1 --port 5001 --nodes "[\"http://localhost:5000\",\"http://localhost:5001\"]" --nodeID 1 --placementGroups "[[0, 1],[1,0]]"
+mini-ceph.exe --dataFolder instanz1 --port 5001 --nodes "[\"http://localhost:5000\",\"http://localhost:5001\"]" --nodeID 1 --placementGroups "[[0, 1],[1,0]]"
 ```
 
 Damit ist der Cluster fertig eingerichtet und die REST-API kann verwendet werden. Für das nachfolgende Beispiel wird die Textdatei `hello-world.txt` verwendet, da `curl` den Inhalt von Textdateien auf der Konsole ausgeben kann. Mini-Ceph kann jedoch beliebige Binärdateien speichern.

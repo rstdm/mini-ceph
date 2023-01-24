@@ -1,4 +1,4 @@
-module github.com/rstdm/glados
+module github.com/rstdm/mini-ceph
 
 go 1.19
 

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rstdm/glados/internal/api/middleware"
-	"github.com/rstdm/glados/internal/api/object"
+	"github.com/rstdm/mini-ceph/internal/api/middleware"
+	"github.com/rstdm/mini-ceph/internal/api/object"
 	"net/http"
 )
 

@@ -3,10 +3,10 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rstdm/glados/internal/api/middleware"
-	"github.com/rstdm/glados/internal/api/object"
-	"github.com/rstdm/glados/internal/api/object/distribution"
-	"github.com/rstdm/glados/internal/configuration"
+	"github.com/rstdm/mini-ceph/internal/api/middleware"
+	"github.com/rstdm/mini-ceph/internal/api/object"
+	"github.com/rstdm/mini-ceph/internal/api/object/distribution"
+	"github.com/rstdm/mini-ceph/internal/configuration"
 	"go.uber.org/zap"
 )
 

@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/rstdm/glados/internal/configuration"
-	"github.com/rstdm/glados/internal/logger"
-	"github.com/rstdm/glados/internal/server"
+	"github.com/rstdm/mini-ceph/internal/configuration"
+	"github.com/rstdm/mini-ceph/internal/logger"
+	"github.com/rstdm/mini-ceph/internal/server"
 	"os"
 )
 

@@ -2,7 +2,7 @@ package file
 
 import (
 	"fmt"
-	"github.com/rstdm/glados/internal/api/object/hash"
+	"github.com/rstdm/mini-ceph/internal/api/object/hash"
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"

@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rstdm/glados/internal/api/object/distribution"
+	"github.com/rstdm/mini-ceph/internal/api/object/distribution"
 	"net/http"
 )
 

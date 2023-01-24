@@ -3,8 +3,8 @@ package object
 import (
 	"errors"
 	"fmt"
-	"github.com/rstdm/glados/internal/api/object/distribution"
-	"github.com/rstdm/glados/internal/api/object/file"
+	"github.com/rstdm/mini-ceph/internal/api/object/distribution"
+	"github.com/rstdm/mini-ceph/internal/api/object/file"
 	"go.uber.org/zap"
 	"mime/multipart"
 	"sync"

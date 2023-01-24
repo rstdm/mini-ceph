@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rstdm/glados/internal/api/object/hash"
+	"github.com/rstdm/mini-ceph/internal/api/object/hash"
 	"net/http"
 )
 
